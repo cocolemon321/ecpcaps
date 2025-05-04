@@ -31,8 +31,8 @@ const Login = () => {
       {/* Circle Background for Logo */}
       <div className="login-logo-container">
         <img
-          src={getAssetPath("userlogo.png")}
-          alt="User Logo"
+          src={getAssetPath("ecoridelogo2.png")}
+          alt="Eco Ride Logo"
           className="login-logo"
         />
       </div>
