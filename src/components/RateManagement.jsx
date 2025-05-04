@@ -12,6 +12,7 @@ import {
 } from "firebase/firestore";
 import { auth } from "../firebase"; // Import auth for current user
 import Layout from "./Layout";
+import ContentHeader from "./ContentHeader"; // Add this import
 import "../styles/RateManagement.css";
 import { FaEdit, FaHistory } from "react-icons/fa";
 import dayjs from "dayjs";
@@ -253,9 +254,9 @@ const RateManagement = () => {
 
   return (
     <Layout>
+      <ContentHeader title="Bike Management" />
       <div className="rate-management-container">
         <h2>Rental Rate Management</h2>
-
         {loading ? (
           <p>Loading...</p>
         ) : (
@@ -303,7 +304,6 @@ const RateManagement = () => {
             </div>
           </>
         )}
-
         {/* Station Revenue Section */}
         <div className="revenue-section">
           <h3>Station Revenue</h3>
@@ -396,7 +396,6 @@ const RateManagement = () => {
             </table>
           </div>
         </div>
-
         {/* Rate History Section */}
         <div className="history-section">
           <div className="history-header">
@@ -443,7 +442,6 @@ const RateManagement = () => {
             </div>
           )}
         </div>
-
         {/* Edit Modal */}
         {editingRate && (
           <div className="modal-overlay" onClick={closeEditModal}>

@@ -4,6 +4,7 @@ import { db } from "../firebase";
 import Layout from "./Layout";
 import dayjs from "dayjs";
 import "../styles/RideDetails.css";
+import ContentHeader from "./ContentHeader"; // Add this import
 
 const RideDetails = () => {
   const [rides, setRides] = useState([]);
@@ -167,9 +168,9 @@ const RideDetails = () => {
 
   return (
     <Layout>
+      <ContentHeader /> {/* Add this line */}
       <div className="ride-details-container">
         <h1>Ride Details</h1>
-
         <div className="controls">
           <div className="time-filter">
             <button
@@ -198,7 +199,6 @@ const RideDetails = () => {
             </button>
           </div>
         </div>
-
         {/* Update the stats grid in the JSX */}
         <div className="stats-grid">
           <div className="stat-card">
@@ -226,7 +226,6 @@ const RideDetails = () => {
             <p>{stats.totalCarbonSaved.toFixed(2)} kg</p>
           </div>
         </div>
-
         {loading ? (
           <div className="loading">Loading...</div>
         ) : (

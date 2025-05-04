@@ -23,6 +23,7 @@ import dayjs from "dayjs";
 import weekOfYear from "dayjs/plugin/weekOfYear"; // Add this
 import isBetween from "dayjs/plugin/isBetween"; // Add this import
 import "../styles/SystemAnalytics.css"; // Add this line
+import ContentHeader from "./ContentHeader"; // Add this import
 
 // Add weekOfYear plugin
 dayjs.extend(weekOfYear);
@@ -453,6 +454,7 @@ const SystemAnalytics = () => {
 
   return (
     <Layout>
+      <ContentHeader /> {/* Add this line */}
       <div className="analytics-container">
         <div className="analytics-header">
           <h1>System Analytics</h1>
