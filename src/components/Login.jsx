@@ -10,9 +10,11 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
-  const logoPath = import.meta.env.DEV
-    ? "/assets/ecoridelogo2.png"
-    : "/ecpcaps/assets/ecoridelogo2.png";
+  const getAssetPath = (filename) => {
+    return import.meta.env.DEV
+      ? `/assets/${filename}`
+      : `/ecpcaps/assets/${filename}`;
+  };
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -28,7 +30,11 @@ const Login = () => {
     <div className="login-container">
       {/* Circle Background for Logo */}
       <div className="login-logo-container">
-        <img src={logoPath} alt="Eco Ride Logo" className="login-logo" />
+        <img
+          src={getAssetPath("userlogo.png")}
+          alt="User Logo"
+          className="login-logo"
+        />
       </div>
       <p className="login-subtitle">Drive Green, Ride Clean!</p>
 
