@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { HashRouter as Router, Routes, Route } from "react-router-dom"; // Changed this line
 import { auth } from "./firebase";
 import Dashboard from "./components/Dashboard";
 import Login from "./components/Login";
@@ -10,7 +10,7 @@ import AdminManagement from "./components/AdminManagement";
 import RateManagement from "./components/RateManagement";
 import SystemAnalytics from "./components/SystemAnalytics";
 import RideDetails from "./components/RideDetails"; // Add this import
-import ErrorBoundary from './components/ErrorBoundary';
+import ErrorBoundary from "./components/ErrorBoundary";
 import "./App.css";
 
 const App = () => {
@@ -32,9 +32,18 @@ const App = () => {
             path="/user-management"
             element={user ? <UserManagement /> : <Login />}
           />
-          <Route path="/bike-management" element={user ? <BikeManagement /> : <Login />} />
-          <Route path="/stations" element={user ? <StationManagement /> : <Login />} />
-          <Route path="/admin-management" element={user ? <AdminManagement /> : <Login />} />
+          <Route
+            path="/bike-management"
+            element={user ? <BikeManagement /> : <Login />}
+          />
+          <Route
+            path="/stations"
+            element={user ? <StationManagement /> : <Login />}
+          />
+          <Route
+            path="/admin-management"
+            element={user ? <AdminManagement /> : <Login />}
+          />
           <Route
             path="/rate-management"
             element={user ? <RateManagement /> : <Login />}
@@ -43,7 +52,10 @@ const App = () => {
             path="/system-analytics"
             element={user ? <SystemAnalytics /> : <Login />}
           />
-          <Route path="/ride-details" element={user ? <RideDetails /> : <Login />} />
+          <Route
+            path="/ride-details"
+            element={user ? <RideDetails /> : <Login />}
+          />
           <Route path="/" element={!user ? <Login /> : <Dashboard />} />
         </Routes>
       </Router>

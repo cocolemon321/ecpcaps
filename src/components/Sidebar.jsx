@@ -37,7 +37,7 @@ const Sidebar = () => {
       {/* Logo Section */}
       <div className="logo">
         <img
-          src="/assets/ecoridelogo2.png"
+          src={import.meta.env.BASE_URL + "assets/ecoridelogo2.png"}
           alt="EcoRide Logo"
           style={{ width: "100%", maxWidth: "100px", height: "auto" }}
         />

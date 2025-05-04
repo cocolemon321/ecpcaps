@@ -1,8 +1,8 @@
 // src/components/Login.jsx
-import React, { useState } from 'react';
-import { auth, signInWithEmailAndPassword } from '../firebase';
-import { useNavigate } from 'react-router-dom';
-import '../styles/Login.css';
+import React, { useState } from "react";
+import { auth, signInWithEmailAndPassword } from "../firebase";
+import { useNavigate } from "react-router-dom";
+import "../styles/Login.css";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -14,7 +14,7 @@ const Login = () => {
     e.preventDefault();
     try {
       await signInWithEmailAndPassword(auth, email, password);
-      navigate("/dashboard"); 
+      navigate("/dashboard");
     } catch (err) {
       setError(err.message);
     }
@@ -24,7 +24,11 @@ const Login = () => {
     <div className="login-container">
       {/* Circle Background for Logo */}
       <div className="login-logo-container">
-        <img src="/assets/ecoridelogo2.png" alt="EcoRide Logo" className="login-logo" />
+        <img
+          src={import.meta.env.BASE_URL + "assets/ecoridelogo2.png"}
+          alt="Eco Ride Logo"
+          className="login-logo"
+        />
       </div>
       <p className="login-subtitle">Drive Green, Ride Clean!</p>
 
@@ -46,13 +50,16 @@ const Login = () => {
           <label>Password</label>
           <input
             type="password"
+            required
+            autoComplete="current-password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            required
           />
         </div>
-        
-        <button type="submit" className="login-button">LOG IN</button>
+
+        <button type="submit" className="login-button">
+          LOG IN
+        </button>
       </form>
     </div>
   );
