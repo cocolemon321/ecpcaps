@@ -1,0 +1,10 @@
+
+  
+  /* Ensure the content respects the sidebar */
+  .content {
+    margin-left: 250px; /* Same width as sidebar */
+    padding: 20px;
+    width: calc(100% - 250px); /* Ensure content doesn't exceed screen width */
+    box-sizing: border-box;
+  }
+  

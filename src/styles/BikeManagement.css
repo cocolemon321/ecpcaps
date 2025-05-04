@@ -1,0 +1,964 @@
+/* 🎨 Root Variables for Consistent Styling */
+:root {
+  --primary-color: #0A8754;
+  --secondary-color: #00897B;
+  --danger-color: #dc3545;
+  --warning-color: #ffc107;
+  --success-color: #28a745;
+  --info-color: #007bff;
+  --background-light: #f8f9fa;
+  --border-radius-sm: 5px;
+  --border-radius-md: 8px;
+  --border-radius-lg: 10px;
+  --spacing-sm: 10px;
+  --spacing-md: 15px;
+  --spacing-lg: 20px;
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.1);
+  --shadow-md: 0 4px 10px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+.clickable-row {
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.clickable-row:hover {
+  background: #f0f0f0; /* ✅ Hover effect to indicate it's clickable */
+}
+
+/* Container */
+.bike-management-container {
+  padding: var(--spacing-lg);
+  background-color: var(--background-light);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-md);
+  width: 100%;
+  min-height: 100vh;
+  box-sizing: border-box;
+  /* Remove the old pagination styles */
+  .pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: var(--spacing-md);
+    margin-top: var(--spacing-lg);
+    padding: var(--spacing-md) 0;
+  }
+  
+  /* Add new pagination styles matching BikeManagement */
+  .pagination-controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: var(--spacing-md);
+    margin-top: var(--spacing-lg);
+    padding: var(--spacing-md) 0;
+  }
+  
+  .pagination-button {
+    padding: 8px 16px;
+    border: 1px solid var(--primary-color);
+    background-color: white;
+    color: var(--primary-color);
+    border-radius: var(--border-radius-sm);
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s ease;
+  }
+  
+  .pagination-button:hover {
+    background-color: var(--primary-color);
+    color: white;
+  }
+  
+  .pagination-button:disabled {
+    background-color: #e9ecef;
+    border-color: #ced4da;
+    color: #6c757d;
+    cursor: not-allowed;
+  }
+  
+  .pagination-info {
+    color: #6c757d;
+    font-size: 0.9rem;
+  }
+  
+  @media (max-width: 768px) {
+    .pagination-controls {
+      gap: var(--spacing-sm);
+    }
+  }  max-width: none; /* Remove max-width constraint */
+  margin: 0;
+  width: 100%;
+  min-height: 100vh;
+  box-sizing: border-box;
+}
+
+.bike-preview {
+  width: 80%;
+  max-height: 200px;
+  object-fit: cover;
+  margin-top: 10px;
+  border-radius: 5px;
+}
+
+/* Header */
+.bike-management-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-lg);
+  padding-bottom: var(--spacing-md);
+  border-bottom: 2px solid var(--primary-color);
+}
+
+.bike-management-header h2 {
+  font-size: 1.5rem;
+  color: var(--primary-color);
+}
+/* Generate QR PDFs Button */
+.generate-pdf-btn {
+  background-color: var(--info-color);
+  color: white;
+  border: none;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--border-radius-sm);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 10px; /* Add some space above the button */
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.generate-pdf-btn:hover {
+  background-color: #0056b3; /* Darker blue when hovered */
+  transform: scale(1.05); /* Slight scaling effect */
+}
+
+.generate-pdf-btn:focus {
+  outline: none; /* Remove default focus outline */
+  box-shadow: 0 0 5px rgba(0, 123, 255, 0.5); /* Add custom focus effect */
+}
+
+
+/* Add New Button */
+.add-bike-btn {
+  background-color: var(--primary-color); /* Add this line */
+  color: white;
+  border: none;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--border-radius-sm);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  transition: background-color 0.3s ease; /* Add smooth transition */
+}
+
+.add-bike-btn:hover {
+  background-color: var(--secondary-color);
+  transform: scale(1.05); /* Slight scaling effect */
+}
+
+/* Search Container */
+.search-container {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  flex-wrap: nowrap;
+}
+
+.search-box {
+  flex: 1;
+  padding: 0.5rem 1rem;
+  border: 1px solid #ced4da;
+  border-radius: var(--border-radius-sm);
+  font-size: 0.9rem;
+  height: 40px;
+  margin: 0;
+}
+
+.add-bike-btn,
+.generate-pdf-btn {
+  height: 40px;
+  padding: 0 var(--spacing-md);
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  font-size: 0.9rem;
+  margin: 0; /* Remove any margins */
+  min-width: 100px; /* Ensure minimum width */
+}
+
+/* Sort Container within Search Container */
+.sort-container {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  white-space: nowrap;
+  margin-left: auto; /* Push to rightmost */
+}
+
+.sort-label {
+  font-weight: 500;
+  color: #333;
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.sort-dropdown {
+  padding: 0.35rem 0.5rem;
+  border: 1px solid #ced4da;
+  border-radius: var(--border-radius-sm);
+  background-color: white;
+  color: #333;
+  font-size: 0.9rem;
+  cursor: pointer;
+  height: 40px; /* Match other elements height */
+  min-width: 150px; /* Give enough space for options */
+  margin: 0;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .search-container {
+    flex-wrap: wrap;
+    gap: var(--spacing-sm);
+  }
+
+  .search-box,
+  .add-bike-btn,
+  .generate-pdf-btn,
+  .sort-container {
+    width: 100%;
+  }
+
+  .sort-container {
+    order: 4; /* Move to bottom on mobile */
+  }
+
+  .sort-dropdown {
+    flex: 1;
+  }
+}
+
+/* Table Container */
+.table-container {
+  width: 100%;
+  overflow-x: auto;
+  background: white;
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-sm);
+  margin-bottom: var(--spacing-lg);
+}
+
+/* Bike List Table */
+.bike-list {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 800px;
+}
+
+/* Remove or comment out any existing th styling */
+.bike-list th {
+  background-color: var(--secondary-color) !important;
+  color: white !important;
+}
+
+/* Remove hover effects */
+.bike-list th:hover {
+  background-color: var(--secondary-color) !important;
+}
+
+/* Headers and Cells */
+.bike-list th,
+.bike-list td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid var(--border-color);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 0.9rem;
+}
+
+.bike-list th {
+  background-color: var(--primary-color);
+  color: white;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  cursor: default;
+  user-select: none;
+}
+
+/* Column widths */
+.bike-list th:nth-child(1),
+.bike-list td:nth-child(1) { width: 20%; } /* Bike Name */
+.bike-list th:nth-child(2),
+.bike-list td:nth-child(2) { width: 15%; } /* Bike ID */
+.bike-list th:nth-child(3),
+.bike-list td:nth-child(3) { width: 15%; } /* Category */
+.bike-list th:nth-child(4),
+.bike-list td:nth-child(4) { width: 15%; } /* Type */
+.bike-list th:nth-child(5),
+.bike-list td:nth-child(5) { 
+  width: 100px;        /* Fixed width for image column */
+  min-width: 100px;    /* Ensure minimum width */
+  text-align: center;  /* Center the image in its cell */
+} /* Image */
+.bike-list th:nth-child(6),
+.bike-list td:nth-child(6) { width: 12%; } /* Status */
+.bike-list th:nth-child(7),
+.bike-list td:nth-child(7) { width: 8%; } /* Action */
+
+/* Row hover effect */
+.bike-list tr:hover td {
+  background-color: var(--background-hover);
+}
+
+/* Action buttons */
+.action-buttons {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-start;
+}
+
+.edit-btn {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+  background-color: var(--primary-color);
+  color: white;
+}
+
+.edit-btn:hover {
+  background-color: var(--secondary-color);
+}
+
+/* Table image styling */
+.table-bike-image {
+  width: 100%;         /* Fill the entire column width */
+  height: 60px;        /* Maintain fixed height */
+  max-width: 100px;    /* Maximum width to prevent oversized images */
+  min-width: 60px;     /* Minimum width to ensure visibility */
+  object-fit: cover;   /* Maintain aspect ratio and cover area */
+  border-radius: 4px;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+  display: block;      /* Remove any inline spacing */
+  margin: 0 auto;      /* Center the image in its column */
+}
+
+.bike-list {
+  width: 100%;
+  overflow-x: auto;
+  margin: var(--spacing-lg) 0;
+  background: white;
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: 0;
+}
+
+/* Table Basic Structure */
+.bike-list table {
+  width: 100%;
+  min-width: 800px; /* Minimum width before horizontal scroll */
+  border-collapse: collapse;
+  table-layout: auto; /* Changed from fixed to auto */
+  border-spacing: 0;
+  margin: 0;
+  padding: 0;
+}
+
+/* Column Widths */
+.bike-list th:nth-child(1),
+.bike-list td:nth-child(1) { /* Bike Name */
+  min-width: 150px;
+  width: 20%;
+}
+
+.bike-list th:nth-child(2),
+.bike-list td:nth-child(2) { /* Bike ID */
+  min-width: 120px;
+  width: 15%;
+}
+
+.bike-list th:nth-child(3),
+.bike-list td:nth-child(3) { /* Category */
+  min-width: 120px;
+  width: 15%;
+}
+
+.bike-list th:nth-child(4),
+.bike-list td:nth-child(4) { /* Type */
+  min-width: 120px;
+  width: 15%;
+}
+
+.bike-list th:nth-child(5),
+.bike-list td:nth-child(5) { /* Image */
+  min-width: 100px;
+  width: 15%;
+}
+
+.bike-list th:nth-child(6),
+.bike-list td:nth-child(6) { /* Status */
+  min-width: 120px;
+  width: 12%;
+}
+
+.bike-list th:nth-child(7),
+.bike-list td:nth-child(7) { /* Action */
+  min-width: 100px;
+  width: auto; /* Let it expand as needed */
+}
+
+/* Headers and Cells */
+.bike-list th,
+.bike-list td {
+  padding: 12px;
+  text-align: left;
+  word-wrap: break-word;
+  border-bottom: 1px solid var(--background-light);
+}
+
+.bike-list th {
+  background-color: var(--secondary-color);
+  color: white;
+  font-weight: 600;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.bike-list td {
+  font-size: 0.9rem;
+  color: #333;
+  vertical-align: middle;
+  white-space: nowrap;
+  overflow: visible; /* Changed from hidden to visible */
+  text-overflow: clip;
+  max-width: 150px; /* Adjust this value based on your needs */
+  height: 50px;
+}
+
+/* Status Dropdown Styling */
+.bike-list td select {
+  padding: 5px 10px;
+  border-radius: var(--border-radius-sm);
+  border: 1px solid #ced4da;
+  background-color: white;
+  cursor: pointer;
+  font-size: 0.9rem;
+  max-width: 100%;
+  width: auto;
+  white-space: nowrap;
+  color: inherit; /* Reset color to inherit from option */
+}
+
+.bike-list td select option {
+  color: black; /* Reset color for dropdown options */
+}
+
+.bike-list td select option[value="Available"] {
+  color: var(--success-color);
+  background-color: rgba(40, 167, 69, 0.1);
+}
+
+.bike-list td select option[value="To Repair"] {
+  color: var(--warning-color);
+  background-color: rgba(255, 193, 7, 0.1);
+}
+
+.bike-list td select option[value="Needs Replacement"] {
+  color: #fd7e14; /* Orange color */
+  background-color: rgba(253, 126, 20, 0.1);
+}
+
+.bike-list td select option[value="Retired"] {
+  color: var(--danger-color);
+  background-color: rgba(220, 53, 69, 0.1);
+}
+
+/* Add this to color the selected value in the dropdown */
+.bike-list td select[value="Available"] {
+  color: var (--success-color);
+}
+
+.bike-list td select[value="To Repair"] {
+  color: var(--warning-color);
+}
+
+.bike-list td select[value="Needs Replacement"] {
+  color: #fd7e14;
+}
+
+.bike-list td select[value="Retired"] {
+  color: var(--danger-color);
+}
+
+/* Keep action buttons visible */
+.bike-list td:last-child {
+  white-space: nowrap;
+  overflow: visible;
+  text-align: center;
+  padding: 8px 16px;
+}
+
+.bike-list td select:hover {
+  border-color: var(--primary-color);
+}
+
+/* Status Colors */
+.status-available { color: var(--success-color); }
+.status-repair { color: var(--warning-color); }
+.status-replacement { color: var(--danger-color); }
+.status-retired { color: #6c757d; }
+
+/* Status Container Styling */
+.status-container {
+  padding: 6px 12px;
+  border-radius: var(--border-radius-sm);
+  font-weight: 600;
+  font-size: 0.85rem;
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* Status Colors */
+.status-Available {
+  background-color: rgba(40, 167, 69, 0.15);
+  color: #28a745;
+}
+
+.status-To-Repair {
+  background-color: rgba(255, 193, 7, 0.15);
+  color: #ffc107;
+}
+
+.status-Needs-Replacement {
+  background-color: rgba(253, 126, 20, 0.15);
+  color: #fd7e14;
+}
+
+.status-Retired {
+  background-color: rgba(220, 53, 69, 0.15);
+  color: #dc3545;
+}
+
+.status-In-Use {
+  background-color: #3498db;
+  color: white;
+  padding: 5px 10px;
+  border-radius: var(--border-radius-sm);
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+  :root {
+    --spacing-lg: 15px;
+    --spacing-md: 12px;
+    --spacing-sm: 8px;
+  }
+
+  .bike-list {
+    margin: 10px -15px; /* Negative margin to allow full-width scroll */
+    width: 95%; /* Slightly smaller width on mobile */
+    border-radius: var(--border-radius-md);
+  }
+
+  .bike-list th,
+  .bike-list td {
+    padding: var(--spacing-sm);
+    font-size: 0.85rem;
+  }
+
+  .modal-content {
+    width: 95%;
+    padding: var(--spacing-md);
+  }
+
+  .bike-list table {
+    min-width: 600px; /* Smaller minimum width for mobile */
+    font-size: 14px;
+  }
+
+  .table-bike-image {
+    width: 50px;
+    height: 50px;
+  }
+
+  .bike-management-container {
+    padding: var(--spacing-md);
+  }
+}
+
+/* Alternating Rows */
+.bike-list tbody tr:nth-child(even) {
+  background-color: #f8f9fa;
+}
+
+/* Buttons */
+.edit-btn{
+  border: none;
+  padding: var(--spacing-sm) var(--spacing-md);
+  margin: 2px;
+  border-radius: var(--border-radius-sm);
+  cursor: pointer;
+}
+
+.edit-btn {
+  background-color: var(--warning-color);
+  color: white;
+}
+.edit-btn:hover {
+  background-color: #e0a800;
+}
+
+/* 📌 Ensure modal is scrollable but doesn’t overflow the screen */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow-y: auto; /* ✅ Allow scrolling on small screens */
+  padding: var(--spacing-lg);
+  z-index: 1000; /* Ensure modal stays on top */
+}
+/* 📌 Modal Adjustments */
+.modal-content {
+  width: 90%;
+  max-width: 500px;
+  max-height: 90vh;
+  background: white;
+  padding: var(--spacing-lg);
+  border-radius: var(--border-radius-lg);
+  text-align: start;
+  overflow-y: auto; /* ✅ Allow scrolling if needed */
+  position: relative; /* For absolute positioning of close button if needed */
+  margin: auto; /* Center in flex container */
+  transform: translateY(0); /* Reset any transform */
+  box-shadow: var(--shadow-lg);
+}
+
+.bike-image-container {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  margin-bottom: 10px;
+}
+
+/* 📌 Center align modal title */
+.modal-content h2 {
+  text-align: center; /* ✅ Center the text */
+  width: 100%; /* ✅ Ensure full width */
+  margin-bottom: 15px; /* ✅ Add some spacing */
+}
+
+/* 🎨 Buttons */
+.modal-buttons {
+  display: flex;
+  justify-content: space-between;
+  margin-top: var(--spacing-lg);
+  gap: var(--spacing-md);
+}
+
+.save-btn, 
+.cancel-btn {
+  flex: 1;
+  padding: var(--spacing-md);
+  font-size: 0.95rem; /* Consistent font size */
+  font-weight: 600;
+  border: none;
+  border-radius: var(--border-radius-sm);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.save-btn {
+  background-color: var (--success-color);
+  color: white;
+}
+
+.save-btn:hover {
+  background-color: #218838;
+}
+
+.cancel-btn {
+  background-color: var(--danger-color);
+  color: white;
+}
+
+.cancel-btn:hover {
+  background-color: #c82333;
+}
+
+/* 🔄 Upload Box */
+.upload-box {
+  background: #f8f9fa;
+  padding: 10px;
+  border-radius: 8px;
+  margin-bottom: 15px;
+  text-align: center;
+  font-size: 16px;
+  cursor: pointer;
+}
+/* 📌 Labels */
+label {
+  font-weight: bold;
+  display: block;
+  text-align: left;
+  margin: 10px 0 5px;
+}
+
+/* 📝 Input Fields */
+input, select {
+  width: 100%;
+  padding: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
+  border: 1px solid #ccc;
+  border-radius: var(--border-radius-sm);
+  font-size: 1rem;
+}
+@media (max-width: 600px) {
+  .modal-content {
+    width: 95%; /* ✅ Make modal even smaller on mobile */
+  }
+  
+
+  .bike-preview {
+    width: 80%; /* ✅ Make image responsive */
+    max-height: 180px;
+    object-fit: contain;
+    border-radius: 5px;
+  }
+  
+}
+
+/* Pagination Controls */
+.pagination-controls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: var(--spacing-md);
+  margin-top: var(--spacing-lg);
+  padding: var(--spacing-md) 0;
+}
+
+.pagination-button {
+  padding: 8px 16px;
+  border: 1px solid var(--primary-color);
+  background-color: white;
+  color: var(--primary-color);
+  border-radius: var(--border-radius-sm);
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.pagination-button:hover {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+.pagination-button:disabled {
+  background-color: #e9ecef;
+  border-color: #ced4da;
+  color: #6c757d;
+  cursor: not-allowed;
+}
+
+.pagination-info {
+  color: #6c757d;
+  font-size: 0.9rem;
+}
+
+/* Bike Statistics Overlay */
+.bike-stats-overlay {
+  display: flex;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-lg);
+  padding: var(--spacing-md);
+}
+
+.stat-card {
+  background: white;
+  padding: var(--spacing-md);
+  border-radius: var(--border-radius-md);
+  box-shadow: var(--shadow-sm);
+  min-width: 150px;
+  text-align: center;
+  border-left: 4px solid var(--primary-color);
+}
+
+.stat-card h3 {
+  color: var(--secondary-color);
+  margin: 0 0 8px 0;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+}
+
+.stat-card p {
+  color: var(--primary-color);
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin: 0;
+}
+
+/* Table Image Column */
+.table-bike-image {
+  width: 60px;
+  height: 60px;
+  object-fit: cover;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.table-bike-image:hover {
+  transform: scale(1.1);
+}
+
+/* Responsive Adjustments */
+@media (max-width: 1024px) {
+  .bike-list {
+    width: 100%; /* Remove max-width constraint */
+    margin: var(--spacing-md) 0;
+  }
+
+  .bike-list table {
+    min-width: 600px; /* Reduce minimum width for tablets */
+  }
+}
+
+@media (max-width: 768px) {
+  .bike-list {
+    width: 100%;
+    margin: 0;
+    border-radius: 0;
+  }
+
+  .bike-management-container {
+    padding: var(--spacing-md);
+    width: 100%;
+    overflow-x: hidden;
+  }
+
+  /* Adjust column widths for mobile */
+  .bike-list th:nth-child(1) { width: 20%; } /* Bike Name */
+  .bike-list th:nth-child(2) { width: 15%; } /* Bike ID */
+  .bike-list th:nth-child(3) { width: 15%; } /* Category */
+  .bike-list th:nth-child(4) { width: 15%; } /* Type */
+  .bike-list th:nth-child(5) { width: 15%; } /* Image */
+  .bike-list th:nth-child(6) { width: 12%; } /* Status */
+  .bike-list th:nth-child(7) { width: 8%; }  /* Actions */
+
+  .bike-list td,
+  .bike-list th {
+    padding: var(--spacing-sm);
+    font-size: 0.85rem;
+  }
+
+  /* Improve scrolling experience */
+  .bike-management-container {
+    overflow-x: hidden;
+    padding: var(--spacing-md);
+  }
+}
+
+/* Add smooth scrolling */
+.bike-list {
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: var(--primary-color) transparent;
+}
+
+/* Custom scrollbar styling */
+.bike-list::-webkit-scrollbar {
+  height: 6px;
+}
+
+.bike-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.bike-list::-webkit-scrollbar-thumb {
+  background-color: var(--primary-color);
+  border-radius: 20px;
+}
+
+/* Table Controls */
+.table-controls {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.sort-container {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  white-space: nowrap; /* Prevent text wrapping */
+}
+
+.sort-label {
+  font-weight: 500;
+  color: #333;
+  margin: 0; /* Remove any margin */
+  font-size: 0.9rem; /* Match dropdown font size */
+}
+
+.sort-dropdown {
+  padding: 0.35rem 0.5rem;
+  border: 1px solid #ced4da;
+  border-radius: var(--border-radius-sm);
+  background-color: white;
+  color: #333;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .table-controls {
+    justify-content: flex-start;
+  }
+  
+  .sort-container {
+    width: 100%;
+  }
+  
+  .sort-dropdown {
+    flex: 1;
+  }
+}
+
+/* Change the class name from status-Needs-Replacement to status-To-Replace */
+.status-To-Replace {
+  background-color: var(--warning-color);
+  color: white;
+  padding: 5px 10px;
+  border-radius: var(--border-radius-sm);
+}
+
+/* Content wrapper */
+.content-wrapper {
+  width: 100%;
+  max-width: 100%;
+  margin: 0 auto;
+  overflow-x: hidden;
+}

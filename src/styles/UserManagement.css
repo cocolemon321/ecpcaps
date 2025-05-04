@@ -1,0 +1,409 @@
+/* Container & Header */
+.user-management {
+  padding: var(--spacing-lg);
+  background-color: var(--background-light);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-md);
+  width: 100%;
+  min-height: 100vh;
+  box-sizing: border-box;
+}
+
+.user-management-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid var(--primary-color);
+}
+
+.user-management-header h2 {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: var(--primary-color);
+  margin: 0;
+}
+
+/* Search Box */
+.search-box {
+  width: 100%;
+  max-width: 350px;
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 14px;
+  margin-bottom: 15px;
+}
+
+/* Table Container */
+.table-container {
+  width: 100%;
+  overflow-x: auto;
+  background: white;
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-sm);
+  margin-bottom: var(--spacing-lg);
+}
+
+/* User List Table */
+.user-list {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 800px;
+}
+
+.user-list th,
+.user-list td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid var(--border-color);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 0.9rem;
+}
+
+.user-list th {
+  background-color: var(--secondary-color) !important;
+  color: white !important;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  cursor: default;
+  user-select: none;
+}
+
+/* Column widths */
+.user-list th:nth-child(1),
+.user-list td:nth-child(1) { width: 10%; } /* Profile Photo */
+.user-list th:nth-child(2),
+.user-list td:nth-child(2) { width: 20%; } /* Name */
+.user-list th:nth-child(3),
+.user-list td:nth-child(3) { width: 20%; } /* Email */
+.user-list th:nth-child(4),
+.user-list td:nth-child(4) { width: 20%; } /* Address */
+.user-list th:nth-child(5),
+.user-list td:nth-child(5) { width: 10%; } /* Front ID */
+.user-list th:nth-child(6),
+.user-list td:nth-child(6) { width: 10%; } /* Back ID */
+.user-list th:nth-child(7),
+.user-list td:nth-child(7) { width: 10%; } /* Actions */
+
+/* Row hover effect */
+.user-list tr:hover td {
+  background-color: var(--background-hover);
+}
+
+/* Action buttons */
+.action-buttons {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-start;
+}
+
+.approve-btn,
+.reject-btn,
+.view-details-btn {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+}
+
+.approve-btn {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+.reject-btn {
+  background-color: #dc3545;
+  color: white;
+}
+
+.view-details-btn {
+  background-color: #17a2b8;
+  color: white;
+}
+
+.approve-btn:hover {
+  background-color: var(--secondary-color);
+}
+
+.reject-btn:hover {
+  background-color: #c82333;
+}
+
+.view-details-btn:hover {
+  background-color: #138496;
+}
+
+/* Images in table */
+.profile-thumbnail,
+.id-thumbnail {
+  border-radius: 4px;
+  object-fit: cover;
+}
+
+.profile-thumbnail {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+}
+
+.id-thumbnail {
+  width: 60px;
+  height: 40px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .user-management {
+    padding: var(--spacing-md);
+  }
+
+  .table-container {
+    margin: 0 -15px;
+    border-radius: 0;
+  }
+
+  .user-list {
+    min-width: 600px;
+  }
+
+  .user-list th,
+  .user-list td {
+    padding: 8px;
+    font-size: 0.85rem;
+  }
+
+  .action-buttons {
+    flex-wrap: wrap;
+  }
+}
+
+/* Pagination Controls */
+.pagination {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.pagination button {
+  padding: 6px 12px;
+  border: none;
+  background-color: #0A8754;
+  color: #fff;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.pagination button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.pagination button.active {
+  background-color: #00796b;
+}
+
+/* Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 8px;
+  max-width: 90%;
+  max-height: 90vh;
+  overflow: hidden;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  border-bottom: 1px solid #eee;
+}
+
+.modal-header h3 {
+  margin: 0;
+  color: var(--primary-color);
+}
+
+.close-modal {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #666;
+}
+
+.image-container {
+  padding: 1rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.full-image {
+  max-width: 100%;
+  max-height: 70vh;
+  object-fit: contain;
+}
+
+/* Make table rows not clickable */
+.user-list tr {
+  cursor: default;
+}
+
+/* But keep buttons and images clickable */
+.user-list td img,
+.user-list td button {
+  cursor: pointer;
+}
+
+/* Section Styling */
+.section {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin-bottom: 2rem;
+}
+
+.section h2 {
+  color: var(--primary-color);
+  font-size: 1.25rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid var(--primary-color);
+}
+
+/* Status Badge */
+.status-badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 50px;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.status-badge.verified {
+  background-color: #e7f7ef;
+  color: #28a745;
+}
+
+.status-badge.pending {
+  background-color: #fff3cd;
+  color: #856404;
+}
+
+/* View Details Button */
+.view-details-btn {
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: all 0.3s ease;
+}
+
+.view-details-btn:hover {
+  background-color: var(--secondary-color);
+  transform: translateY(-1px);
+}
+
+/* Status Icons */
+.status-icon {
+  font-size: 1.2rem;
+}
+
+.status-icon.approved {
+  color: #28a745;
+}
+
+.status-icon.rejected {
+  color: #dc3545;
+}
+
+.status-icon.pending {
+  color: #ffc107;
+}
+
+.status-icon-container {
+  position: relative;
+  display: inline-block;
+}
+
+.rejection-reason {
+  display: none;
+  position: absolute;
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 0.5rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  white-space: nowrap;
+  z-index: 1;
+  top: -30px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.status-icon-container:hover .rejection-reason {
+  display: block;
+}
+
+/* Rejection Modal */
+.rejection-reason-input {
+  width: 100%;
+  min-height: 100px;
+  padding: 0.5rem;
+  margin: 1rem 0;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  resize: vertical;
+}
+
+.modal-buttons {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+}
+
+.confirm-reject-btn {
+  background-color: #dc3545;
+  color: white;
+}
+
+.confirm-reject-btn:disabled {
+  background-color: #dc354580;
+  cursor: not-allowed;
+}
+
+/* Status Text */
+.rejected-text {
+  color: #dc3545;
+  font-size: 0.9rem;
+}
+
+.approved-text {
+  color: #28a745;
+  font-size: 0.9rem;
+}

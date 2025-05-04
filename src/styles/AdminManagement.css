@@ -1,0 +1,478 @@
+/* ------------------ Add New Admin Button ------------------ */
+.btn-create-admin {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 5px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.95rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    margin: 0; /* Remove margin */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    height: 40px; /* Fixed height to match header */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+  }
+
+  .btn-create-admin:hover {
+    background-color: var(--secondary-color);
+    transform: scale(1.05); /* Slight scaling effect */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+  .btn-create-admin svg {
+    font-size: 18px;
+  }
+
+/* ------------------ Update Photo Button ------------------ */
+.btn-update {
+    background-color: #0A8754;
+    color: #ffffff;
+    border: none;
+    padding: 10px;
+    font-size: 14px;
+    border-radius: 5px;
+    cursor: pointer;
+    width: 48%;
+    transition: background-color 0.3s ease;
+    margin-right: 4%;
+}
+
+.btn-update:hover {
+    background-color: #087348;
+}
+
+/* Existing styles */
+
+/* Admin Management Container */
+.admin-management-container {
+    width: 95%;
+    margin: 20px auto;
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Header */
+.admin-management-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid var(--primary-color);
+}
+
+.admin-management-header h2 {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: var(--primary-color);
+  margin: 0;
+}
+
+.admin-management-container h2 {
+    font-size: 24px;
+    font-weight: bold;
+    color: #0A8754;
+}
+
+/* Search Bar */
+.admin-search-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.admin-search-bar input {
+    width: 300px;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 14px;
+}
+
+/* Admin Gallery - Grid Layout */
+.admin-gallery {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 15px;
+}
+
+/* Individual Admin Card */
+.admin-card {
+    background: white;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transition: transform 0.2s;
+}
+
+.admin-card:hover {
+    transform: scale(1.03);
+}
+
+/* Admin Photo Container */
+.admin-photo {
+    width: 100px;
+    height: 100px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 0 auto 15px auto;
+    position: relative; /* Add this */
+}
+
+/* Profile Photo */
+.admin-photo img {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 1px solid #0A8754;
+}
+
+.placeholder {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    background: #ddd;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    color: #666;
+}
+
+/* Status Dot and Tooltip */
+.status-dot-container {
+    position: absolute;
+    top: 0;
+    right: 0;
+    z-index: 1;
+}
+
+.status-dot {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 2px solid #fff;
+    box-shadow: 0 0 3px rgba(0,0,0,0.3);
+    cursor: pointer;
+}
+
+.status-tooltip {
+    position: absolute;
+    top: -30px;
+    right: 0;
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    white-space: nowrap;
+    visibility: hidden;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.status-dot-container:hover .status-tooltip {
+    visibility: visible;
+    opacity: 1;
+}
+
+/* Status Dot */
+.status-dot {
+    width: 20px;          /* Size of the dot */
+    height: 20px;         /* Size of the dot */
+    border-radius: 50%;
+    position: absolute;
+    top: 0;              /* Adjust position */
+    right: 0;            /* Adjust position */
+    border: 2px solid #fff;
+    z-index: 1;
+    box-shadow: 0 0 3px rgba(0,0,0,0.3);
+}
+
+.status-dot.active {
+    background-color: #28a745; /* Green for active */
+}
+
+.status-dot.inactive {
+    background-color: #dc3545; /* Red for inactive */
+}
+
+/* Admin Info */
+.admin-info {
+    margin-top: 10px;
+}
+
+.admin-info h4 {
+    margin: 5px 0;
+    font-size: 18px;
+}
+
+.admin-info p {
+    font-size: 14px;
+    color: #666;
+}
+
+/* Status Button */
+/* Remove or comment out these old styles */
+/* .btn-active,
+.btn-inactive {
+    padding: 5px 10px;
+    border-radius: 5px;
+    border: none;
+    font-size: 14px;
+    cursor: pointer;
+    margin-top: 5px;
+}
+
+.btn-active:hover,
+.btn-inactive:hover {
+    background-color: #218838;
+} */
+
+/* Status Indicator */
+.status-indicator {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.status-indicator {
+    font-weight: bold;
+}
+
+.status-indicator span {
+    font-size: 14px;
+}
+
+.role-text {
+    font-size: 12px;
+}
+
+/* Action Buttons */
+.admin-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.edit-btn,
+.delete-btn {
+    border: none;
+    padding: 8px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.edit-btn {
+    background-color: #ffc107;
+    color: white;
+}
+
+.edit-btn:hover {
+    background-color: #e0a800;
+}
+
+.delete-btn {
+    background-color: #dc3545;
+    color: white;
+}
+
+.delete-btn:hover {
+    background-color: #c82333;
+}
+
+/* Modal Overlay */
+.modal-overlay {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.3);
+}
+
+/* Modal Content */
+.modal-content {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    width: 350px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    text-align: center;
+}
+
+/* Form Fields */
+.form-group {
+    margin-bottom: 10px;
+}
+
+.form-group label {
+    display: block;
+    font-weight: 600;
+    text-align: left;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 14px;
+}
+
+/* Preview Image */
+.preview-image img {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    border-radius: 50%;
+    margin-top: 10px;
+}
+
+/* Modal Buttons */
+.btn-create,
+.btn-cancel {
+    padding: 10px;
+    border: none;
+    border-radius: 5px;
+    font-size: 14px;
+    cursor: pointer;
+    width: 48%;
+}
+
+.btn-create {
+    background-color: #0A8754;
+    color: white;
+}
+
+.btn-cancel {
+    background-color: #dc3545;
+    color: white;
+}
+
+.btn-create:hover {
+    background-color: #087348;
+}
+
+.btn-cancel:hover {
+    background-color: #c82333;
+}
+
+/* Role Text */
+.role-text {
+    margin: 5px 0;
+    color: #666;
+    font-size: 14px;
+}
+
+/* Role Edit Controls */
+.role-edit-controls {
+    margin: 10px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.role-edit-controls select {
+    width: 100%;
+    padding: 8px;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+}
+
+/* Role Buttons */
+.role-buttons {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+}
+
+.save-btn,
+.discard-btn {
+    padding: 5px 10px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.save-btn {
+    background-color: #28a745;
+    color: white;
+}
+
+.discard-btn {
+    background-color: #dc3545;
+    color: white;
+}
+
+.edit-role-btn {
+    background-color: #0A8754;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    margin: 5px 0;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .admin-search-bar {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .admin-search-bar input {
+        width: 100%;
+    }
+
+    .admin-gallery {
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    }
+
+    .admin-card {
+        padding: 10px;
+    }
+
+    .admin-photo img {
+        width: 80px;
+        height: 80px;
+    }
+
+    .modal-content {
+        width: 90%;
+    }
+
+    .admin-management-header {
+        padding: 1rem;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .btn-create-admin {
+        padding: 8px 12px;
+        font-size: 12px;
+    }
+}
+

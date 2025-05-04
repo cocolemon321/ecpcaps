@@ -1,0 +1,109 @@
+/* Login Container */
+.login-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  background-color: #f5f5f5;
+}
+
+.login-logo-container {
+  width: 200px;
+  height: 200px;
+  background-color: #009C8C; /* Green Circle */
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 10px;
+}
+
+.login-logo {
+  width: 160px; /* Adjust logo size */
+  height: auto;
+  filter: brightness(100%); /* Ensure visibility */
+  
+}
+
+/* Subtitle */
+.login-subtitle {
+  font-style: italic;
+  color: #009C8C;
+  font-weight: bold;
+  margin-bottom: 20px;
+}
+
+/* Super Admin Title */
+.login-title {
+  font-size: 24px;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 20px;
+}
+
+/* Form */
+.login-form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: #fff;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+  width: 350px;
+}
+
+/* Form Group */
+.form-group {
+  width: 100%;
+  margin-bottom: 15px;
+}
+
+/* Labels */
+.form-group label {
+  display: block;
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+/* Input Fields */
+.form-group input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 16px;
+}
+
+/* Button */
+.login-button {
+  width: 100%;
+  padding: 10px;
+  font-size: 18px;
+  font-weight: bold;
+  color: white;
+  background-color: #009C8C;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.login-button:hover {
+  background-color: #007a6f;
+}
+
+/* Error Message */
+.error {
+  color: red;
+  font-size: 14px;
+  margin-bottom: 10px;
+}
+
+/* Responsive Design */
+@media (max-width: 400px) {
+  .login-form {
+      width: 90%;
+  }
+}

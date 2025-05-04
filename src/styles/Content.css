@@ -1,0 +1,466 @@
+/* Content container */
+.content-container {
+  width: 100%;
+  margin: 0;
+  padding: 1rem;
+  background-color: #f9f9f9;
+  border-radius: 10px;
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+  box-sizing: border-box;
+}
+
+/* Header styling */
+.content-header {
+  background-color: #009C8C; /* EcoRide green color */
+  color: white;
+  padding: 20px;
+  border-radius: 10px;
+  margin-bottom: 20px;
+  text-align: start ;
+}
+
+.content-header__title {
+  font-size: 36px;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+.content-header__subtitle {
+  font-size: 18px;
+}
+
+/* Stats Section */
+.content-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 20px;
+  margin-bottom: 20px;
+  width: 100%;
+}
+
+.stat-card__title {
+  font-size: 1rem;
+  color: #666;
+  margin-bottom: 0.75rem;
+}
+
+.stat-card__value {
+  font-size: 1.75rem;
+  font-weight: bold;
+  color: #333;  /* Use the same color for all values */
+  margin: 0;
+}
+
+/* Remove or update the special styling for revenue card */
+
+/* Bar Chart styling */
+.content-body {
+  margin-top: 20px;
+}
+
+.content-body__title {
+  font-size: 22px;
+  margin-bottom: 10px;
+  color: #333;
+}
+
+.content-body__text {
+  font-size: 16px;
+  color: #333;
+  margin-top: 20px;
+}
+
+/* Ride Tracking Map */
+.ride-tracking-map {
+  width: 100%;
+  height: 100%;
+  border-radius: 8px;
+  margin: 20px 0;
+}
+
+.map-controls {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.map-controls input {
+  flex: 1;
+  padding: 8px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+}
+
+/* Remove or comment out the tracking button styles */
+/* .tracking-button {
+  padding: 8px 16px;
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.tracking-button.active {
+  background-color: var(--danger-color);
+}
+
+.tracking-button:hover {
+  opacity: 0.9;
+} */
+
+/* Active Rides Count */
+.active-rides-count {
+  padding: 8px 12px;
+  background-color: var(--primary-color);
+  color: white;
+  border-radius: 4px;
+  font-size: 0.9em;
+  margin-left: 10px;
+}
+
+/* Mapbox Popup */
+.mapboxgl-popup {
+  max-width: 200px;
+}
+
+.mapboxgl-popup-content {
+  padding: 10px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .content-stats {
+    grid-template-columns: 1fr;
+  }
+}
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+  padding: 1rem;
+}
+
+.metrics-chart,
+.system-chart {
+  background: white;
+  border-radius: 8px;
+  padding: 1rem;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.chart-title {
+  font-size: 1rem;
+  margin-bottom: 0.5rem;
+  color: #333;
+}
+
+.revenue-chart {
+  background: white;
+  border-radius: 8px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  margin-top: 1rem;
+}
+
+.revenue-chart h3 {
+  margin-bottom: 1rem;
+  color: #333;
+}
+
+.map-section {
+  width: 100%;
+  height: 400px;
+  margin-bottom: 1rem;
+}
+
+.charts-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  margin: 2rem 0;
+}
+
+.charts-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+}
+
+.chart-container {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.chart-title {
+  margin: 0 0 1rem 0;
+  font-size: 1.2rem;
+  color: #333;
+}
+
+.revenue-section {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.revenue-section {
+  width: 100%;
+  margin-top: 1rem;
+  background: white;
+  border-radius: 8px;
+  padding: 1rem;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* Update responsive design for smaller screens */
+@media (max-width: 768px) {
+  .stat-card {
+    max-width: 100%;
+  }
+}
+
+.tracking-section {
+  display: grid;
+  grid-template-columns: minmax(300px, 1fr) minmax(300px, 1fr);
+  gap: 1rem;
+  margin: 1rem 0;
+  background: white;
+  padding: 1rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.active-rides-table {
+  width: 100%;
+  overflow-x: hidden; /* Change from auto to hidden */
+}
+
+.active-rides-table table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem; /* Slightly smaller font size */
+  table-layout: fixed; /* Force table to respect column widths */
+}
+
+.active-rides-table th,
+.active-rides-table td {
+  padding: 0.5rem;
+  text-align: left;
+  border-bottom: 1px solid #eee;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: none; /* Remove max-width constraint */
+}
+
+/* Add specific column widths */
+.active-rides-table th:nth-child(1),
+.active-rides-table td:nth-child(1) {
+  width: 15%; /* Ride ID */
+}
+
+.active-rides-table th:nth-child(2),
+.active-rides-table td:nth-child(2) {
+  width: 20%; /* User Name */
+}
+
+.active-rides-table th:nth-child(3),
+.active-rides-table td:nth-child(3) {
+  width: 15%; /* Bike ID */
+}
+
+.active-rides-table th:nth-child(4),
+.active-rides-table td:nth-child(4) {
+  width: 25%; /* Start Time */
+}
+
+.active-rides-table th:nth-child(5),
+.active-rides-table td:nth-child(5) {
+  width: 25%; /* Duration */
+}
+
+/* Add tooltip on hover for truncated content */
+.active-rides-table td {
+  position: relative;
+}
+
+.active-rides-table td:hover::after {
+  content: attr(data-full-text);
+  position: absolute;
+  left: 0;
+  top: 100%;
+  background: #333;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  z-index: 1000;
+  white-space: normal;
+  max-width: 200px;
+  display: none;
+}
+
+.active-rides-table td[data-full-text]:hover::after {
+  display: block;
+}
+
+.map-container {
+  position: relative;
+  width: 100%;
+  height: 300px;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.ride-tracking-map {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  border-radius: 8px;
+}
+
+.section-title {
+  font-size: 1rem;
+  color: #333;
+  margin-bottom: 0.5rem;
+}
+
+.no-rides {
+  text-align: center;
+  color: #666;
+  padding: 2rem !important;
+}
+
+@media (max-width: 1024px) {
+  .tracking-section {
+    grid-template-columns: 1fr;
+  }
+  
+  .map-container {
+    height: 300px;
+  }
+}
+
+.marker-popup {
+  padding: 8px;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+/* Stats section styling */
+.stats-section {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 1.5rem;
+  margin: 1.5rem 0;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0 1rem;
+}
+
+.stat-card {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  text-align: center;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  box-sizing: border-box;
+  min-width: 0; /* Add this to prevent overflow */
+}
+
+/* Responsive adjustments */
+@media (max-width: 1200px) {
+  .stats-section {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .stats-section {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .stats-section {
+    grid-template-columns: 1fr;
+  }
+}
+
+.metrics-chart,
+.system-chart,
+.revenue-section {
+  background: white;
+  border-radius: 8px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  height: 100%;
+  min-height: 400px;
+  display: flex;
+  flex-direction: column;
+}
+
+.chart-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+/* Make charts responsive */
+.recharts-responsive-container {
+  flex: 1;
+  width: 100% !important;
+  height: 350px !important;
+}
+
+/* Remove any margin between charts */
+.metrics-chart,
+.system-chart {
+  margin: 0;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1024px) {
+  .charts-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .metrics-chart,
+  .system-chart {
+    min-height: 400px;
+  }
+}
+
+.error-container {
+  text-align: center;
+  padding: 2rem;
+  margin: 2rem;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.error-container h2 {
+  color: #d32f2f;
+  margin-bottom: 1rem;
+}
+
+.error-container p {
+  color: #666;
+}

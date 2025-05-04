@@ -1,0 +1,366 @@
+/* Container */
+.ride-details-container {
+  padding: var(--spacing-lg);
+  background-color: var(--background-light);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-md);
+  width: 100%;
+  min-height: 100vh;
+  box-sizing: border-box;
+}
+
+.controls {
+  margin: 2rem 0;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.search-input {
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+  width: 300px;
+  font-size: 0.9rem;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+}
+
+/* Table Container */
+.bike-list {
+  width: 100%;
+  overflow-x: auto;
+  margin: var(--spacing-lg) 0;
+  background: white;
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: 0;
+}
+
+.table-container {
+  width: 100%;
+  margin: 1rem 0;
+  background: white;
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  margin-bottom: var(--spacing-lg);
+}
+
+/* Table Basic Structure */
+.bike-list table {
+  width: 100%;
+  min-width: 800px;
+  border-collapse: collapse;
+  table-layout: auto;
+  border-spacing: 0;
+  margin: 0;
+  padding: 0;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 1000px;
+  table-layout: fixed; /* This ensures equal column widths */
+}
+
+/* Headers and Cells */
+.bike-list th,
+.bike-list td {
+  padding: 12px;
+  text-align: left;
+  word-wrap: break-word;
+  border-bottom: 1px solid var(--background-light);
+}
+
+th, td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid var(--border-color);
+  font-size: 0.9rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Define specific column widths */
+th:nth-child(1), td:nth-child(1) { width: 15%; } /* Date */
+th:nth-child(2), td:nth-child(2) { width: 15%; } /* User */
+th:nth-child(3), td:nth-child(3) { width: 15%; } /* Bike */
+th:nth-child(4), td:nth-child(4) { width: 10%; } /* Duration */
+th:nth-child(5), td:nth-child(5) { width: 10%; } /* Distance */
+th:nth-child(6), td:nth-child(6) { width: 10%; } /* Amount */
+th:nth-child(7), td:nth-child(7) { width: 12.5%; } /* Start Station */
+th:nth-child(8), td:nth-child(8) { width: 12.5%; } /* End Station */
+
+/* Add tooltip on hover for truncated content */
+td {
+  position: relative;
+}
+
+td:hover {
+  overflow: visible;
+  white-space: normal;
+  z-index: 1;
+}
+
+td:hover::after {
+  content: attr(title);
+  position: absolute;
+  left: 0;
+  top: 100%;
+  background: white;
+  padding: 5px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  z-index: 2;
+}
+
+th {
+  background-color: var(--secondary-color) !important;
+  color: white !important;
+  cursor: default;
+  user-select: none;
+  white-space: nowrap;
+}
+
+th:hover {
+  background-color: var(--secondary-color) !important;
+}
+
+td {
+  color: var(--text-dark);
+  background-color: white;
+}
+
+tr:hover td {
+  background-color: var(--background-hover);
+}
+
+/* Remove the old pagination styles */
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: var(--spacing-md);
+  margin-top: var(--spacing-lg);
+  padding: var(--spacing-md) 0;
+}
+
+/* Add new pagination styles matching BikeManagement */
+.pagination-controls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: var(--spacing-md);
+  margin-top: var(--spacing-lg);
+  padding: var(--spacing-md) 0;
+}
+
+.pagination-button {
+  padding: 8px 16px;
+  border: 1px solid var(--primary-color);
+  background-color: white;
+  color: var(--primary-color);
+  border-radius: var(--border-radius-sm);
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.pagination-button:hover {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+.pagination-button:disabled {
+  background-color: #e9ecef;
+  border-color: #ced4da;
+  color: #6c757d;
+  cursor: not-allowed;
+}
+
+.pagination-info {
+  color: #6c757d;
+  font-size: 0.9rem;
+}
+
+.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 200px;
+  color: var(--text-dark);
+}
+
+.time-filter {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.filter-btn {
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+  background: white;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.2s;
+}
+
+.filter-btn.active {
+  background: var(--primary-color);
+  color: white;
+  border-color: var(--primary-color);
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.stat-card {
+  background: white;
+  padding: 1rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  text-align: center;
+}
+
+.stat-card h3 {
+  margin: 0;
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.stat-card p {
+  margin: 0.5rem 0 0;
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #009C8C;
+}
+
+@media (max-width: 768px) {
+  .ride-details-container {
+    padding: var(--spacing-md);
+    width: 100%;
+    overflow-x: hidden;
+  }
+
+  .controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .search-input {
+    width: 100%;
+  }
+
+  .table-container {
+    margin: 1rem -1rem;
+    border-radius: 0;
+  }
+
+  .pagination {
+    gap: 1rem;
+  }
+
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .time-filter {
+    flex-wrap: wrap;
+  }
+
+  .filter-btn {
+    flex: 1;
+    min-width: 120px;
+  }
+
+  .pagination-controls {
+    gap: var(--spacing-sm);
+  }
+
+  .bike-list td,
+  .bike-list th {
+    padding: var(--spacing-sm);
+    font-size: 0.85rem;
+  }
+}
+
+/* Headers and Cells */
+.bike-list th,
+.bike-list td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid var(--border-color);
+  font-size: 0.9rem;
+}
+
+.bike-list th {
+  background-color: var(--secondary-color);
+  color: white;
+  font-weight: 600;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  cursor: default; /* Remove pointer cursor */
+  user-select: none;
+}
+
+/* Remove hover effect on header */
+.bike-list th:hover {
+  background-color: var(--secondary-color); /* Keep the same background color */
+  color: white; /* Keep the same text color */
+}
+
+/* Keep cell hover styles */
+.bike-list td:hover {
+  background-color: var(--background-hover);
+}
+
+/* Alternating Rows */
+.bike-list tbody tr:nth-child(even) {
+  background-color: #f8f9fa;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .bike-list {
+    width: 100%;
+    margin: var(--spacing-md) 0;
+  }
+
+  .bike-list table {
+    min-width: 600px;
+  }
+}
+
+/* Smooth Scrolling */
+.bike-list {
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: var(--primary-color) transparent;
+}
+
+/* Custom Scrollbar */
+.bike-list::-webkit-scrollbar {
+  height: 6px;
+}
+
+.bike-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.bike-list::-webkit-scrollbar-thumb {
+  background-color: var(--primary-color);
+  border-radius: 20px;
+}

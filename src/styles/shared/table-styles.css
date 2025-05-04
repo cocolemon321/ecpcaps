@@ -1,0 +1,29 @@
+/* Standard Table Header Styles */
+table thead tr th {
+  background-color: var(--secondary-color) !important; /* Force consistent color */
+  color: white !important;
+  font-weight: 600;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  cursor: default !important; /* Prevent hover cursor */
+  user-select: none;
+  padding: 12px;
+  border-bottom: none;
+}
+
+/* Remove hover effects on table headers */
+table thead tr:hover th,
+table thead tr th:hover {
+  background-color: var(--secondary-color) !important; /* Keep same color on hover */
+  cursor: default !important;
+}
+
+/* Optional: Add subtle border between header cells */
+table thead tr th {
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+table thead tr th:last-child {
+  border-right: none;
+}
