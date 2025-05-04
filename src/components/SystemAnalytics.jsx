@@ -90,6 +90,46 @@ const SystemAnalytics = () => {
     "#795548",
   ];
 
+  // Replace the processStationData function with:
+  const processStationData = (stations, rides, period) => {
+    const now = dayjs();
+    const stationRides = new Map();
+
+    // Filter rides by time period
+    const filteredRides = rides.filter((ride) => {
+      const rideDate = dayjs(ride.rideEndedAt);
+      switch (period) {
+        case "daily":
+          return rideDate.isSame(now, "day");
+        case "weekly":
+          return rideDate.isAfter(now.subtract(1, "week"));
+        case "monthly":
+          return rideDate.isAfter(now.subtract(1, "month"));
+        default:
+          return true;
+      }
+    });
+
+    // Count rides per station
+    filteredRides.forEach((ride) => {
+      if (ride.startStation) {
+        stationRides.set(
+          ride.startStation,
+          (stationRides.get(ride.startStation) || 0) + 1
+        );
+      }
+    });
+
+    // Map station data with ride counts
+    return stations
+      .map((station) => ({
+        id: station.id,
+        stationName: station.stationName,
+        rides: stationRides.get(station.id) || 0,
+      }))
+      .sort((a, b) => b.rides - a.rides);
+  };
+
   // Update the groupDataByPeriod function to include all metrics
   const groupDataByPeriod = (rides, period) => {
     const groupedData = new Map();
@@ -318,34 +358,33 @@ const SystemAnalytics = () => {
     }
   };
 
-  // Update the fetchAnalytics function
+  // Update the fetchAnalytics function:
   const fetchAnalytics = async () => {
     try {
+      // Fetch rides
       const rideHistoryRef = collection(db, "ride_history");
       const ridesSnap = await getDocs(rideHistoryRef);
+      const rides = ridesSnap.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+        rideEndedAt: doc.data().rideEndedAt?.toDate
+          ? doc.data().rideEndedAt.toDate()
+          : new Date(doc.data().rideEndedAt.seconds * 1000),
+      }));
 
-      // Convert rides to array without filtering - match RideDetails approach
-      const rides = ridesSnap.docs.map((doc) => {
-        const data = doc.data();
-        return {
-          id: doc.id,
-          ...data,
-          rideEndedAt: data.rideEndedAt?.toDate
-            ? data.rideEndedAt.toDate()
-            : new Date(data.rideEndedAt.seconds * 1000),
-          // Set default values for missing fields - same as RideDetails
-          distance: data.distance || 0,
-          duration: data.duration || 0,
-          amountPaid: data.amountPaid || 0,
-          caloriesBurned: data.caloriesBurned || 0,
-          carbonSaved: data.carbonSaved || 0,
-        };
-      });
+      setAllRides(rides);
 
-      setAllRides(rides); // Store all rides in state
+      // Fetch stations
+      const stationsRef = collection(db, "stations");
+      const stationsSnap = await getDocs(stationsRef);
+      const stations = stationsSnap.docs.map((doc) => ({
+        id: doc.id,
+        stationName: doc.data().stationName,
+      }));
 
-      // Log total rides for verification
-      console.log("Total rides in SystemAnalytics:", rides.length);
+      // Process station data with the new function
+      const processedStations = processStationData(stations, rides, timePeriod);
+      setPopularStations(processedStations);
 
       // Process data for different time periods using all rides
       const monthlyData = groupDataByPeriod(rides, "monthly");
@@ -358,21 +397,16 @@ const SystemAnalytics = () => {
         daily: dailyData,
       });
 
-      // Process station data - include all rides
-      const stationsRef = collection(db, "stations");
-      const stationsSnap = await getDocs(stationsRef);
-
+      // Update station statistics - count all rides
       const stationRevenueMap = new Map();
-      stationsSnap.forEach((station) => {
-        const stationData = station.data();
+      stations.forEach((station) => {
         stationRevenueMap.set(station.id, {
-          stationName: stationData.stationName,
+          stationName: station.stationName,
           revenue: 0,
           rides: 0,
         });
       });
 
-      // Update station statistics - count all rides
       rides.forEach((ride) => {
         if (ride.startStation) {
           const stationData = stationRevenueMap.get(ride.startStation);
@@ -388,7 +422,6 @@ const SystemAnalytics = () => {
       );
 
       setStationRevenue(stationRevenueArray);
-      setPopularStations(stationRevenueArray.sort((a, b) => b.rides - a.rides));
     } catch (error) {
       console.error("Error fetching analytics:", error);
     }
@@ -396,7 +429,7 @@ const SystemAnalytics = () => {
 
   useEffect(() => {
     fetchAnalytics();
-  }, []);
+  }, [timePeriod]);
 
   // Update the getFilteredData function
   const getFilteredData = (data, period) => {
@@ -767,14 +800,16 @@ const SystemAnalytics = () => {
 
           {/* Popular Stations */}
           <div className="chart-section full-width">
-            <h2>Most Popular Stations</h2>
+            <h2>Most Popular Stations ({timePeriod})</h2>
             <div className="chart-with-analysis">
               <ResponsiveContainer width="100%" height={600}>
-                {" "}
-                {/* Increased height */}
                 <PieChart>
                   <Pie
-                    data={popularStations
+                    data={processStationData(
+                      popularStations,
+                      allRides,
+                      timePeriod
+                    )
                       .filter((station) => station.rides > 0)
                       .slice(0, 5)}
                     dataKey="rides"
@@ -786,7 +821,7 @@ const SystemAnalytics = () => {
                       `${name} ${(percent * 100).toFixed(0)}%`
                     }
                   >
-                    {popularStations
+                    {processStationData(popularStations, allRides, timePeriod)
                       .filter((station) => station.rides > 0)
                       .slice(0, 5)
                       .map((entry, index) => (
@@ -803,17 +838,24 @@ const SystemAnalytics = () => {
                 </PieChart>
               </ResponsiveContainer>
               <AnalysisCard
-                title="Station Usage Analysis"
-                analysis={`The top ${
-                  popularStations.filter((s) => s.rides > 0).slice(0, 5).length
-                } stations account for ${popularStations
+                title={`Station Usage Analysis (${timePeriod})`}
+                analysis={`For this ${timePeriod} period, the top stations account for ${processStationData(
+                  popularStations,
+                  allRides,
+                  timePeriod
+                )
                   .filter((s) => s.rides > 0)
                   .slice(0, 5)
-                  .reduce((sum, station) => sum + station.rides, 0)} rides. ${
-                  popularStations[0]?.stationName || "N/A"
-                } is the most active station with ${
-                  popularStations[0]?.rides || 0
-                } rides.`}
+                  .reduce(
+                    (sum, station) => sum + station.rides,
+                    0
+                  )} rides out of ${allRides.length} total system rides. ${
+                  processStationData(popularStations, allRides, timePeriod)[0]
+                    ?.stationName || "N/A"
+                } is currently the most active station with ${
+                  processStationData(popularStations, allRides, timePeriod)[0]
+                    ?.rides || 0
+                } rides in this period.`}
               />
             </div>
           </div>

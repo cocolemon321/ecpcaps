@@ -46,11 +46,16 @@
   
   /* Edit button */
   .edit-btn {
-    background-color: #ffc107;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    margin: 0 auto; /* Centers the button horizontally */
+    padding: 8px 16px;
     border: none;
-    padding: 6px 12px;
-    color: #000;
     border-radius: 4px;
+    background-color: var(--primary-color);
+    color: white;
     cursor: pointer;
     transition: background-color 0.3s ease;
   }
@@ -157,6 +162,22 @@
     margin-top: 1rem;
   }
   
+  .revenue-table th {
+    cursor: pointer;
+    user-select: none;
+    padding: 12px;
+    background-color: #f5f5f5;
+    transition: background-color 0.2s;
+  }
+
+  .revenue-table th:hover {
+    background-color: #e0e0e0;
+  }
+
+  .revenue-table th:active {
+    background-color: #d5d5d5;
+  }
+
   /* History Section */
   .history-section {
     margin-top: 2rem;
@@ -210,6 +231,10 @@
     font-weight: 600;
   }
   
+  td {
+    text-align: center; /* Centers all table cell content */
+  }
+  
   /* Responsive adjustments */
   @media (max-width: 768px) {
     .table-container {
@@ -220,4 +245,52 @@
     .history-table {
       min-width: 600px;
     }
+  }
+
+  .period-selector {
+    margin-bottom: 1rem;
+  }
+
+  .period-selector select {
+    padding: 0.5rem;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+  }
+
+  .total-row {
+    background-color: #f5f5f5;
+    border-top: 2px solid #ddd;
+  }
+
+  .total-row td {
+    padding: 1rem 0.5rem;
+  }
+
+  .controls {
+    margin-bottom: 1rem;
+  }
+
+  .time-filter {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .filter-btn {
+    padding: 0.5rem 1rem;
+    border: 1px solid #ddd;
+    background: white;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .filter-btn:hover {
+    background: #f5f5f5;
+  }
+
+  .filter-btn.active {
+    background: #009C8C;
+    color: white;
+    border-color: #009C8C;
   }
