@@ -19,6 +19,12 @@ const Header = () => {
   const [showNotifications, setShowNotifications] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
 
+  const getAssetPath = (filename) => {
+    return import.meta.env.DEV
+      ? `/assets/${filename}`
+      : `/ecpcaps/assets/${filename}`;
+  };
+
   // Fetch notifications
   useEffect(() => {
     const notificationsRef = collection(db, "notifications");
@@ -141,7 +147,7 @@ const Header = () => {
         {/* Move profile section before notification */}
         <div className="profile">
           <img
-            src="/assets/userlogo.png"
+            src={getAssetPath("userlogo.png")}
             alt="Profile"
             className="profile-img"
           />
