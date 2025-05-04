@@ -19,11 +19,9 @@ const Header = () => {
   const [showNotifications, setShowNotifications] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
 
-  const getAssetPath = (filename) => {
-    return import.meta.env.DEV
-      ? `/assets/${filename}`
-      : `/ecpcaps/assets/${filename}`;
-  };
+  // Remove getAssetPath since we're using direct URL
+  const profileImageUrl =
+    "https://ecorideupload.s3.ap-southeast-2.amazonaws.com/uploads/profile/1742829316204_image.png";
 
   // Fetch notifications
   useEffect(() => {
@@ -146,11 +144,7 @@ const Header = () => {
       <div className="user-profile">
         {/* Move profile section before notification */}
         <div className="profile">
-          <img
-            src={getAssetPath("userlogo.png")}
-            alt="Profile"
-            className="profile-img"
-          />
+          <img src={profileImageUrl} alt="Profile" className="profile-img" />
           <div className="profile-name">
             <p>{userName}</p>
             <small>Super Admin</small>
