@@ -75,8 +75,23 @@ table td {
 .chart-section h2 {
   color: #333;
   font-size: 1.5rem;
-  margin-bottom: 2rem;
+  margin-bottom: 1rem;
   text-align: center;
+}
+
+.chart-section .recharts-composed-chart {
+  background-color: white;
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+/* Rating specific colors */
+.recharts-line-dot {
+  fill: #ff7300;
+}
+
+.recharts-bar-rectangle {
+  fill: #82ca9d;
 }
 
 .stat-cards {

@@ -6,13 +6,23 @@ import {
   updateDoc,
   deleteDoc,
   doc,
-  // remove onSnapshot
+  arrayUnion,
+  onSnapshot,
 } from "firebase/firestore";
+import { auth } from "../firebase"; // Assuming auth is imported for currentUser
 import axios from "axios";
 import Layout from "./Layout";
 import ContentHeader from "./ContentHeader";
 import "../styles/AdminManagement.css";
-import { FaPlus, FaEdit, FaTrashAlt } from "react-icons/fa";
+import {
+  FaPlus,
+  FaEdit,
+  FaTrashAlt,
+  FaPencilAlt,
+  FaCamera,
+  FaUserTag,
+} from "react-icons/fa";
+import dayjs from "dayjs";
 
 const AdminManagement = () => {
   const [admins, setAdmins] = useState([]);
@@ -35,14 +45,62 @@ const AdminManagement = () => {
   // First, add a new state for stations
   const [stations, setStations] = useState([]);
 
-  useEffect(() => {
-    fetchAdmins();
-  }, []);
+  const [stats, setStats] = useState({
+    total: 0,
+    active: 0,
+    inactive: 0,
+    onBreak: 0,
+  });
 
-  // Update the fetchAdmins function to also fetch stations and combine the data
-  const fetchAdmins = async () => {
-    try {
-      // First fetch stations
+  // Add new state for dropdown
+  const [showOptions, setShowOptions] = useState(null);
+
+  // Keep the ADMIN_STATUSES constant for reference:
+  const ADMIN_STATUSES = {
+    ACTIVE: "Active",
+    INACTIVE: "Inactive",
+    ON_BREAK: "On Break",
+  };
+
+  // Keep the STATUS_COLORS for styling reference:
+  const STATUS_COLORS = {
+    Active: "#4CAF50", // Green
+    Inactive: "#F44336", // Red
+    "On Break": "#FFC107", // Yellow/Amber
+  };
+
+  // Update the calculateStats function
+  const calculateStats = (adminsList) => {
+    const stats = {
+      total: adminsList.length,
+      active: 0,
+      inactive: 0,
+      onBreak: 0,
+    };
+
+    adminsList.forEach((admin) => {
+      switch (admin.status) {
+        case ADMIN_STATUSES.ACTIVE:
+          stats.active++;
+          break;
+        case ADMIN_STATUSES.INACTIVE:
+          stats.inactive++;
+          break;
+        case ADMIN_STATUSES.ON_BREAK:
+          stats.onBreak++;
+          break;
+        default:
+          stats.inactive++; // Default to inactive if status is undefined
+          break;
+      }
+    });
+
+    return stats;
+  };
+
+  useEffect(() => {
+    // First fetch stations
+    const fetchStations = async () => {
       const stationsSnapshot = await getDocs(collection(db, "stations"));
       const stationsMap = {};
       stationsSnapshot.docs.forEach((doc) => {
@@ -52,27 +110,41 @@ const AdminManagement = () => {
         };
       });
       setStations(stationsMap);
+      return stationsMap;
+    };
 
-      // Then fetch admins
-      const adminsSnapshot = await getDocs(collection(db, "admins"));
-      const allAdmins = adminsSnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-        stationDetails: doc.data().stationAssignedTo
-          ? stationsMap[doc.data().stationAssignedTo]
-          : null,
-      }));
-      setAdmins(allAdmins);
-    } catch (error) {
-      console.error("Error fetching admins:", error);
-    }
-  };
+    // Set up real-time listener for admins
+    const setupAdminsListener = (stationsMap) => {
+      const adminsRef = collection(db, "admins");
+      return onSnapshot(adminsRef, (snapshot) => {
+        const allAdmins = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+          stationDetails: doc.data().stationAssignedTo
+            ? stationsMap[doc.data().stationAssignedTo]
+            : null,
+        }));
+        setAdmins(allAdmins);
+        setStats(calculateStats(allAdmins));
+      });
+    };
 
+    // Initialize everything
+    fetchStations().then((stationsMap) => {
+      const unsubscribe = setupAdminsListener(stationsMap);
+      return () => unsubscribe(); // Cleanup on component unmount
+    });
+  }, []);
+
+  // Update the role update function
   const handleUpdateAdminRole = async (adminId, newRole) => {
     try {
       const adminRef = doc(db, "admins", adminId);
-      await updateDoc(adminRef, { roles: [newRole] });
-      // Remove the fetchAdmins() call since updates are automatic
+      await updateDoc(adminRef, {
+        roles: [newRole],
+        updatedAt: new Date(),
+      });
+
       alert("Role updated successfully!");
     } catch (error) {
       console.error("Error updating role:", error);
@@ -80,21 +152,28 @@ const AdminManagement = () => {
     }
   };
 
-  // Add this new function to handle role editing
+  // Update the role edit function
   const handleEditRole = (adminId, currentRole) => {
     setEditingRole({
       adminId,
-      role: currentRole || "station_manager",
+      role: currentRole || "Station Manager", // Set default role if none exists
     });
   };
 
-  // Add this function to handle role save
+  // Update the role save function
   const handleSaveRole = async () => {
+    if (!editingRole.adminId || !editingRole.role) {
+      alert("Please select a role");
+      return;
+    }
+
     try {
       await handleUpdateAdminRole(editingRole.adminId, editingRole.role);
+      // Reset editing state
       setEditingRole({ adminId: null, role: "" });
     } catch (error) {
       console.error("Error saving role:", error);
+      alert("Failed to save role changes");
     }
   };
 
@@ -171,24 +250,8 @@ const AdminManagement = () => {
 
     try {
       await deleteDoc(doc(db, "admins", adminId));
-      // Remove the fetchAdmins() call since updates are automatic
     } catch (error) {
       console.error("Error deleting admin:", error);
-    }
-  };
-
-  // Toggle the admin's status
-  const handleToggleStatus = async (adminId, currentStatus) => {
-    const newStatus = currentStatus === "Active" ? "Inactive" : "Active";
-
-    try {
-      const adminRef = doc(db, "admins", adminId);
-      await updateDoc(adminRef, { status: newStatus });
-      // Manually fetch admins after update
-      await fetchAdmins();
-    } catch (error) {
-      console.error("Error updating status:", error);
-      alert("Failed to update admin status. Please try again.");
     }
   };
 
@@ -242,6 +305,26 @@ const AdminManagement = () => {
     <Layout>
       <ContentHeader title="Admin Management" />
       <div className="admin-management-container">
+        {/* Add Stats Cards */}
+        <div className="stats-container">
+          <div className="stat-card">
+            <h3>Total Admins</h3>
+            <p>{stats.total}</p>
+          </div>
+          <div className="stat-card active">
+            <h3>Active</h3>
+            <p>{stats.active}</p>
+          </div>
+          <div className="stat-card break">
+            <h3>On Break</h3>
+            <p>{stats.onBreak}</p>
+          </div>
+          <div className="stat-card inactive">
+            <h3>Inactive</h3>
+            <p>{stats.inactive}</p>
+          </div>
+        </div>
+
         <div className="admin-management-header">
           <h2>Admin Creation</h2>
           <button
@@ -257,14 +340,65 @@ const AdminManagement = () => {
           {admins.length > 0 ? (
             admins.map((admin) => (
               <div key={admin.id} className="admin-card">
+                {/* Move edit container before admin photo */}
+                <div className="edit-container">
+                  <button
+                    className="edit-toggle"
+                    onClick={() =>
+                      setShowOptions(showOptions === admin.id ? null : admin.id)
+                    }
+                  >
+                    <FaPencilAlt />
+                  </button>
+
+                  {showOptions === admin.id && (
+                    <div className="edit-options">
+                      <button
+                        onClick={() => {
+                          handleOpenEditModal(admin);
+                          setShowOptions(null);
+                        }}
+                      >
+                        <FaCamera /> Change Photo
+                      </button>
+                      <button
+                        onClick={() => {
+                          handleEditRole(admin.id, admin.roles?.[0]);
+                          setShowOptions(null);
+                        }}
+                      >
+                        <FaUserTag /> Change Role
+                      </button>
+                      <button
+                        onClick={() => {
+                          handleDeleteAdmin(admin.id);
+                          setShowOptions(null);
+                        }}
+                      >
+                        <FaTrashAlt /> Delete Admin
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {/* Admin photo section */}
                 <div className="admin-photo">
                   <div className="status-dot-container">
                     <span
-                      className={`status-dot ${
-                        admin.status === "Active" ? "active" : "inactive"
-                      }`}
+                      className={`status-dot ${admin.status?.toLowerCase()}`}
+                      style={{
+                        backgroundColor:
+                          STATUS_COLORS[admin.status] || STATUS_COLORS.Inactive,
+                      }}
                     />
-                    <div className="status-tooltip">Status: {admin.status}</div>
+                    <div className="status-tooltip">
+                      {admin.status || "Inactive"} • Last updated:{" "}
+                      {admin.statusUpdatedAt
+                        ? dayjs(admin.statusUpdatedAt.toDate()).format(
+                            "MMM D, HH:mm"
+                          )
+                        : "Not available"}
+                    </div>
                   </div>
                   {admin.profilePhoto ? (
                     <img src={admin.profilePhoto} alt="Admin" />
@@ -272,39 +406,23 @@ const AdminManagement = () => {
                     <div className="placeholder">No Image</div>
                   )}
                 </div>
+
+                {/* Admin info section */}
                 <div className="admin-info">
                   <h4>{admin.name}</h4>
                   <p>{admin.email}</p>
-                  <p className="role-text">
-                    Role: {admin.roles?.[0] || "Unassigned"}
-                  </p>
-                  <p className="station-text">
-                    {admin.stationAssignedTo ? (
-                      <span className="station-assigned">
-                        Station:
-                        {admin.stationDetails?.stationName || "Loading..."}
+                  <div className="role-badge">
+                    {admin.roles?.[0] || "No Role"}
+                  </div>
+                  <div className="station-info">
+                    {admin.stationDetails ? (
+                      <span className="station-name">
+                        📍 {admin.stationDetails.stationName}
                       </span>
                     ) : (
-                      <span className="station-unassigned">
-                        📍 No Station Assigned
-                      </span>
+                      <span className="no-station">No Station Assigned</span>
                     )}
-                  </p>
-                </div>
-                <div className="admin-actions">
-                  <button
-                    className="edit-btn"
-                    onClick={() => handleOpenEditModal(admin)}
-                  >
-                    <FaEdit />
-                  </button>
-
-                  <button
-                    className="delete-btn"
-                    onClick={() => handleDeleteAdmin(admin.id)}
-                  >
-                    <FaTrashAlt />
-                  </button>
+                  </div>
                 </div>
               </div>
             ))
@@ -419,6 +537,49 @@ const AdminManagement = () => {
                 >
                   Cancel
                 </button>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* Edit Admin Role Modal */}
+        {editingRole.adminId && (
+          <div className="modal-overlay">
+            <div className="modal-content">
+              <h3>Change Admin Role</h3>
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  handleSaveRole();
+                }}
+              >
+                <div className="form-group">
+                  <label>Select Role:</label>
+                  <select
+                    value={editingRole.role}
+                    onChange={(e) =>
+                      setEditingRole({
+                        ...editingRole,
+                        role: e.target.value,
+                      })
+                    }
+                  >
+                    <option value="Station Manager">Station Manager</option>
+                    <option value="User Support">User Support</option>
+                  </select>
+                </div>
+                <div className="button-group">
+                  <button type="submit" className="btn-update">
+                    Save Role
+                  </button>
+                  <button
+                    type="button"
+                    className="btn-cancel"
+                    onClick={() => setEditingRole({ adminId: null, role: "" })}
+                  >
+                    Cancel
+                  </button>
+                </div>
               </form>
             </div>
           </div>

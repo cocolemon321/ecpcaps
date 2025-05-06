@@ -26,6 +26,7 @@ import {
   where,
 } from "firebase/firestore";
 import "../styles/Content.css";
+import { FaMapMarkedAlt } from "react-icons/fa";
 
 // Import dayjs + plugin
 import dayjs from "dayjs";
@@ -59,6 +60,7 @@ const Content = () => {
   });
   const [hourlyRevenue, setHourlyRevenue] = useState(Array(24).fill(0));
   const [activeAdminsCount, setActiveAdminsCount] = useState(0);
+  const [activeUserMarkers, setActiveUserMarkers] = useState({});
 
   const mapContainer = useRef(null);
   const map = useRef(null);
@@ -412,110 +414,96 @@ const Content = () => {
     }
   }, [mapContainer.current]);
 
+  // Replace the useEffect for real-time tracking
   useEffect(() => {
-    if (!map.current || !isTracking || !activeRideId) return;
+    if (!map.current) return;
 
-    const unsubscribe = onSnapshot(
-      doc(db, "activeRides", activeRideId),
-      (docSnapshot) => {
-        const data = docSnapshot.data();
-        if (data && data.locationData) {
-          const { latitude, longitude } = data.locationData;
+    const activeRidesRef = collection(db, "activeRides");
+    const q = query(activeRidesRef, where("rideStatus", "==", "started"));
 
-          // Update or create marker
-          if (!marker.current) {
-            marker.current = new mapboxgl.Marker({
-              color: "#FF0000",
-              scale: 0.8,
-            })
-              .setLngLat([longitude, latitude])
-              .addTo(map.current);
-          } else {
-            marker.current.setLngLat([longitude, latitude]);
-          }
+    const unsubscribe = onSnapshot(q, async (snapshot) => {
+      try {
+        snapshot.docChanges().forEach(async (change) => {
+          const rideData = change.doc.data();
+          const rideId = change.doc.id;
 
-          // Center map on user location
-          map.current.flyTo({
-            center: [longitude, latitude],
-            zoom: 15,
-          });
-        }
-      }
-    );
+          if (
+            (change.type === "added" || change.type === "modified") &&
+            rideData.locationData
+          ) {
+            const { latitude, longitude } = rideData.locationData;
 
-    return () => {
-      unsubscribe();
-      if (marker.current) {
-        marker.current.remove();
-        marker.current = null;
-      }
-    };
-  }, [isTracking, activeRideId]);
+            // Get user details
+            const userRef = doc(db, "approved_users", rideData.userId);
+            const userSnap = await getDoc(userRef);
+            const userData = userSnap.exists() ? userSnap.data() : {};
+            const userName = `${userData.first_name || ""} ${
+              userData.surname || ""
+            }`.trim();
 
-  useEffect(() => {
-    if (!map.current || !isTracking) return;
+            // Get bike details
+            const bikeRef = doc(db, "bikes", rideData.bikeId);
+            const bikeSnap = await getDoc(bikeRef);
+            const bikeData = bikeSnap.exists() ? bikeSnap.data() : {};
+            const bikeName = bikeData.bikeName || "Unknown Bike";
 
-    // Query for active rides
-    const ridesRef = collection(db, "activeRides");
-    const q = query(ridesRef, where("rideStatus", "==", "started"));
-
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      snapshot.docChanges().forEach((change) => {
-        const rideData = change.doc.data();
-        const rideId = change.doc.id;
-
-        if (change.type === "added" || change.type === "modified") {
-          if (rideData.locationData) {
-            // Update tracked locations
-            setTrackedLocations((prev) => ({
-              ...prev,
-              [rideId]: rideData.locationData,
-            }));
-
-            // Create or update marker
             if (!markersRef.current[rideId]) {
+              // Create marker element
+              const el = document.createElement("div");
+              el.className = "user-location-marker";
+
+              // Create simple popup with actual name and bike name
+              const popup = new mapboxgl.Popup({
+                closeButton: false,
+                closeOnClick: false,
+                anchor: "top",
+                offset: [0, -10],
+              }).setHTML(`
+                <div class="simple-popup">
+                  <p><strong>${userName}</strong></p>
+                  <p>Bike: ${bikeName}</p>
+                </div>
+              `);
+
+              // Create and add marker with popup
               markersRef.current[rideId] = new mapboxgl.Marker({
-                color: "#FF0000",
-                scale: 0.8,
+                element: el,
+                anchor: "center",
               })
-                .setLngLat([
-                  rideData.locationData.longitude,
-                  rideData.locationData.latitude,
-                ])
-                .setPopup(new mapboxgl.Popup().setHTML(`Ride ID: ${rideId}`))
+                .setLngLat([longitude, latitude])
+                .setPopup(popup)
                 .addTo(map.current);
             } else {
-              markersRef.current[rideId].setLngLat([
-                rideData.locationData.longitude,
-                rideData.locationData.latitude,
-              ]);
+              // Update marker position and popup content
+              markersRef.current[rideId]
+                .setLngLat([longitude, latitude])
+                .getPopup().setHTML(`
+                  <div class="simple-popup">
+                    <p><strong>${userName}</strong></p>
+                    <p>Bike: ${bikeName}</p>
+                  </div>
+                `);
             }
           }
-        }
 
-        if (change.type === "removed") {
-          // Remove marker when ride ends
-          if (markersRef.current[rideId]) {
-            markersRef.current[rideId].remove();
-            delete markersRef.current[rideId];
+          if (change.type === "removed") {
+            if (markersRef.current[rideId]) {
+              markersRef.current[rideId].remove();
+              delete markersRef.current[rideId];
+            }
           }
-          // Remove from tracked locations
-          setTrackedLocations((prev) => {
-            const updated = { ...prev };
-            delete updated[rideId];
-            return updated;
-          });
-        }
-      });
+        });
+      } catch (error) {
+        console.error("Error updating markers:", error);
+      }
     });
 
     return () => {
       unsubscribe();
-      // Clean up all markers
       Object.values(markersRef.current).forEach((marker) => marker.remove());
       markersRef.current = {};
     };
-  }, [isTracking]);
+  }, []);
 
   useEffect(() => {
     const activeRidesRef = collection(db, "activeRides");
@@ -680,6 +668,14 @@ const Content = () => {
         </div>
 
         <div className="map-container">
+          <div className="map-section-header">
+            <h2 className="map-title">
+              <FaMapMarkedAlt /> Live User Activity Map
+            </h2>
+            <p className="map-subtitle">
+              Track real-time locations of active riders across the system
+            </p>
+          </div>
           <div ref={mapContainer} className="ride-tracking-map" />
         </div>
       </div>

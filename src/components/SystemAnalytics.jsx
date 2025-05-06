@@ -17,6 +17,7 @@ import {
   Legend,
   ResponsiveContainer,
   Cell,
+  ComposedChart,
 } from "recharts";
 import Layout from "./Layout";
 import dayjs from "dayjs";
@@ -69,6 +70,7 @@ const SystemAnalytics = () => {
   const [popularStations, setPopularStations] = useState([]);
   const [timePeriod, setTimePeriod] = useState("monthly");
   const [allRides, setAllRides] = useState([]); // Add this state
+  const [rideRatings, setRideRatings] = useState([]); // Add this state
 
   // Add time period filter options
   const timeFilters = [
@@ -295,15 +297,15 @@ const SystemAnalytics = () => {
                 infrastructure for Barangay Parada while providing an affordable alternative to motor vehicles.`;
 
       case "calories":
-        const caloriesSavedVsCar = total * 0.5;
+        const healthCostSavings = total * 0.26; // P0.26 per km health cost savings
         return `Barangay Parada residents burned ${total.toFixed(
           0
         )} calories through cycling ${timePhrase}, 
                 equivalent to approximately ${Math.round(
                   total / 100
                 )} healthy meals worth of energy. 
-                This active transportation promotes community health and wellness, potentially reducing healthcare 
-                costs by ₱${(total * 0.05).toFixed(
+                This active transportation promotes community health and wellness, generating estimated healthcare 
+                cost savings of ₱${healthCostSavings.toFixed(
                   2
                 )} through preventative exercise. Regular cyclists in Parada 
                 report improved cardiovascular health and reduced stress levels, creating a healthier community.`;
@@ -357,6 +359,45 @@ const SystemAnalytics = () => {
       default:
         return "No analysis available";
     }
+  };
+
+  // Add this function to process ratings data
+  const processRatingsData = (ratings, period) => {
+    const ratingsByPeriod = new Map();
+    const now = dayjs();
+
+    ratings.forEach((rating) => {
+      const date = dayjs(rating.timestamp);
+      let key;
+
+      switch (period) {
+        case "daily":
+          key = date.format("MMM DD");
+          break;
+        case "weekly":
+          key = `Week ${date.week()} - ${date.format("MMM")}`;
+          break;
+        case "monthly":
+          key = date.format("MMM YYYY");
+          break;
+      }
+
+      if (!ratingsByPeriod.has(key)) {
+        ratingsByPeriod.set(key, {
+          period: key,
+          averageRating: rating.rating,
+          totalRatings: 1,
+        });
+      } else {
+        const existing = ratingsByPeriod.get(key);
+        existing.averageRating =
+          (existing.averageRating * existing.totalRatings + rating.rating) /
+          (existing.totalRatings + 1);
+        existing.totalRatings += 1;
+      }
+    });
+
+    return Array.from(ratingsByPeriod.values());
   };
 
   // Update the fetchAnalytics function:
@@ -423,6 +464,18 @@ const SystemAnalytics = () => {
       );
 
       setStationRevenue(stationRevenueArray);
+
+      // Fetch ride ratings
+      const ratingsRef = collection(db, "ride_ratings");
+      const ratingsSnap = await getDocs(ratingsRef);
+      const ratings = ratingsSnap.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+        timestamp: doc.data().timestamp?.toDate
+          ? doc.data().timestamp.toDate()
+          : new Date(doc.data().timestamp.seconds * 1000),
+      }));
+      setRideRatings(ratings);
     } catch (error) {
       console.error("Error fetching analytics:", error);
     }
@@ -796,6 +849,104 @@ const SystemAnalytics = () => {
                   getFilteredData(monthlyStats, timePeriod),
                   "carbonSaved"
                 )}
+              />
+            </div>
+          </div>
+
+          {/* User Ride Ratings */}
+          <div className="chart-section full-width">
+            <h2>User Ride Ratings</h2>
+            <div className="chart-with-analysis">
+              <ResponsiveContainer width="100%" height={500}>
+                <ComposedChart
+                  data={processRatingsData(rideRatings, timePeriod)}
+                  margin={{ top: 20, right: 30, left: 20, bottom: 70 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis
+                    dataKey="period"
+                    angle={-45}
+                    textAnchor="end"
+                    height={80}
+                    interval={0}
+                  />
+                  <YAxis
+                    domain={[0, 5]}
+                    ticks={[0, 1, 2, 3, 4, 5]}
+                    label={{
+                      value: "Average Rating",
+                      angle: -90,
+                      position: "insideLeft",
+                      offset: 10,
+                    }}
+                  />
+                  <Tooltip
+                    formatter={(value, name) => [
+                      name === "averageRating"
+                        ? `${value.toFixed(2)} stars`
+                        : value,
+                      name === "averageRating"
+                        ? "Average Rating"
+                        : "Total Ratings",
+                    ]}
+                  />
+                  <Legend />
+                  <Bar
+                    dataKey="totalRatings"
+                    fill="#82ca9d"
+                    name="Total Ratings"
+                    opacity={0.3}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="averageRating"
+                    stroke="#ff7300"
+                    name="Average Rating"
+                    strokeWidth={2}
+                    dot={{ fill: "#ff7300" }}
+                  />
+                </ComposedChart>
+              </ResponsiveContainer>
+              <AnalysisCard
+                title="User Satisfaction Analysis"
+                analysis={(() => {
+                  const currentRatings = processRatingsData(
+                    rideRatings,
+                    timePeriod
+                  );
+                  if (currentRatings.length === 0)
+                    return "No ratings data available for this period.";
+
+                  const totalRatings = currentRatings.reduce(
+                    (sum, period) => sum + period.totalRatings,
+                    0
+                  );
+                  const averageRating =
+                    currentRatings.reduce(
+                      (sum, period) =>
+                        sum + period.averageRating * period.totalRatings,
+                      0
+                    ) / totalRatings;
+
+                  const timePhrase =
+                    timePeriod === "daily"
+                      ? "today"
+                      : timePeriod === "weekly"
+                      ? "this week"
+                      : "this month";
+
+                  return `Users submitted ${totalRatings} ride ratings ${timePhrase}, with an average satisfaction score of ${averageRating.toFixed(
+                    2
+                  )} out of 5 stars. ${
+                    averageRating >= 4.5
+                      ? "Users are highly satisfied with the service."
+                      : averageRating >= 4.0
+                      ? "Users are generally satisfied with the service."
+                      : averageRating >= 3.5
+                      ? "Users find the service acceptable but there's room for improvement."
+                      : "User satisfaction needs attention and improvement measures should be considered."
+                  }`;
+                })()}
               />
             </div>
           </div>

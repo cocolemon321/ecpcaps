@@ -257,15 +257,22 @@ const BikeManagement = () => {
   const indexOfFirstBike = indexOfLastBike - bikesPerPage;
   const totalPages = Math.ceil(bikes.length / bikesPerPage);
 
-  // Add this function at the top of your component
+  // Update the getBikeTotals function
   const getBikeTotals = () => {
-    const regularBikes = bikes.filter(
-      (bike) => bike.bikeCategory === "Regular Bicycle"
-    ).length;
-    const electricBikes = bikes.filter(
-      (bike) => bike.bikeCategory === "Electric Bicycle"
-    ).length;
-    return { regularBikes, electricBikes };
+    return {
+      regularBikes: bikes.filter(
+        (bike) => bike.bikeCategory === "Regular Bicycle"
+      ).length,
+      electricBikes: bikes.filter(
+        (bike) => bike.bikeCategory === "Electric Bicycle"
+      ).length,
+      available: bikes.filter((bike) => bike.bikeStatus === "Available").length,
+      inUse: bikes.filter((bike) => bike.bikeStatus === "In Use").length,
+      toRepair: bikes.filter((bike) => bike.bikeStatus === "To Repair").length,
+      toReplace: bikes.filter((bike) => bike.bikeStatus === "To Replace")
+        .length,
+      retired: bikes.filter((bike) => bike.bikeStatus === "Retired").length,
+    };
   };
 
   return (
@@ -390,13 +397,41 @@ const BikeManagement = () => {
 
         {/* Update the return JSX - Add this after the search-container div */}
         <div className="bike-stats-overlay">
-          <div className="stat-card">
-            <h3>Regular Bikes</h3>
-            <p>{getBikeTotals().regularBikes}</p>
+          <div className="stats-row">
+            <div className="stat-card regular">
+              <h3>Regular Bikes</h3>
+              <p>{getBikeTotals().regularBikes}</p>
+            </div>
+            <div className="stat-card electric">
+              <h3>Electric Bikes</h3>
+              <p>{getBikeTotals().electricBikes}</p>
+            </div>
+            <div className="stat-card available">
+              <h3>Available</h3>
+              <p>{getBikeTotals().available}</p>
+            </div>
+            <div className="stat-card in-use">
+              <h3>In Use</h3>
+              <p>{getBikeTotals().inUse}</p>
+            </div>
           </div>
-          <div className="stat-card">
-            <h3>Electric Bikes</h3>
-            <p>{getBikeTotals().electricBikes}</p>
+          <div className="stats-row">
+            <div className="stat-card repair">
+              <h3>To Repair</h3>
+              <p>{getBikeTotals().toRepair}</p>
+            </div>
+            <div className="stat-card replace">
+              <h3>To Replace</h3>
+              <p>{getBikeTotals().toReplace}</p>
+            </div>
+            <div className="stat-card retired">
+              <h3>Retired</h3>
+              <p>{getBikeTotals().retired}</p>
+            </div>
+            <div className="stat-card total">
+              <h3>Total Bikes</h3>
+              <p>{bikes.length}</p>
+            </div>
           </div>
         </div>
 
