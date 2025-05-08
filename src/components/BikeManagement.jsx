@@ -7,7 +7,7 @@ import {
   updateDoc,
   doc,
 } from "firebase/firestore";
-import axios from "axios";
+import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import Layout from "./Layout";
 import ContentHeader from "./ContentHeader"; // Import the ContentHeader component
 import "../styles/BikeManagement.css";
@@ -65,20 +65,68 @@ const BikeManagement = () => {
     return `${prefix}-${String(count).padStart(3, "0")}`; // e.g., BK-001, EBK-001
   };
 
+  const compressImage = (file) => {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = (event) => {
+        const img = new Image();
+        img.src = event.target.result;
+        img.onload = () => {
+          const canvas = document.createElement("canvas");
+          const ctx = canvas.getContext("2d");
+
+          // Calculate new dimensions while maintaining aspect ratio
+          let width = img.width;
+          let height = img.height;
+          const maxDimension = 800; // Maximum dimension for the image
+
+          if (width > height && width > maxDimension) {
+            height = (height * maxDimension) / width;
+            width = maxDimension;
+          } else if (height > maxDimension) {
+            width = (width * maxDimension) / height;
+            height = maxDimension;
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+
+          ctx.drawImage(img, 0, 0, width, height);
+
+          // Convert to blob with 60% quality
+          canvas.toBlob(
+            (blob) => {
+              resolve(blob);
+            },
+            "image/jpeg",
+            0.6
+          );
+        };
+      };
+    });
+  };
+
   const uploadImage = async () => {
     if (!bikePhoto) return null;
-    const formData = new FormData();
-    formData.append("bikePhoto", bikePhoto);
 
     try {
-      const response = await axios.post(
-        "http://192.168.6.200:4000/api/upload-bike-photo",
-        formData,
-        {
-          headers: { "Content-Type": "multipart/form-data" },
-        }
-      );
-      return response.data.bikePhotoUrl;
+      // Compress the image
+      const compressedBlob = await compressImage(bikePhoto);
+
+      // Create a unique filename
+      const filename = `bikes/${Date.now()}_${bikePhoto.name}`;
+
+      // Get Firebase Storage reference
+      const storage = getStorage();
+      const storageRef = ref(storage, filename);
+
+      // Upload the compressed image
+      await uploadBytes(storageRef, compressedBlob);
+
+      // Get the download URL
+      const downloadURL = await getDownloadURL(storageRef);
+      return downloadURL;
     } catch (error) {
       console.error("Error uploading image:", error);
       return null;

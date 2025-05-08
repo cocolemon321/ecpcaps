@@ -8,9 +8,14 @@ import {
   doc,
   arrayUnion,
   onSnapshot,
+  addDoc,
 } from "firebase/firestore";
-import { auth } from "../firebase"; // Assuming auth is imported for currentUser
-import axios from "axios";
+import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import {
+  getAuth,
+  createUserWithEmailAndPassword,
+  deleteUser,
+} from "firebase/auth";
 import Layout from "./Layout";
 import ContentHeader from "./ContentHeader";
 import "../styles/AdminManagement.css";
@@ -177,20 +182,70 @@ const AdminManagement = () => {
     }
   };
 
-  // Upload profile photo to AWS S3
-  const uploadProfilePhotoToAWS = async (file) => {
-    const formData = new FormData();
-    formData.append("profilePhoto", file);
+  const compressImage = (file) => {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = (event) => {
+        const img = new Image();
+        img.src = event.target.result;
+        img.onload = () => {
+          const canvas = document.createElement("canvas");
+          const ctx = canvas.getContext("2d");
+
+          // Calculate new dimensions while maintaining aspect ratio
+          let width = img.width;
+          let height = img.height;
+          const maxDimension = 800; // Maximum dimension for the image
+
+          if (width > height && width > maxDimension) {
+            height = (height * maxDimension) / width;
+            width = maxDimension;
+          } else if (height > maxDimension) {
+            width = (width * maxDimension) / height;
+            height = maxDimension;
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+
+          ctx.drawImage(img, 0, 0, width, height);
+
+          // Convert to blob with 60% quality
+          canvas.toBlob(
+            (blob) => {
+              resolve(blob);
+            },
+            "image/jpeg",
+            0.6
+          );
+        };
+      };
+    });
+  };
+
+  const uploadProfilePhoto = async (file) => {
+    if (!file) return null;
 
     try {
-      const response = await axios.post(
-        "http://192.168.6.200:4000/api/upload-profile-photo", // Replace with your AWS endpoint
-        formData,
-        { headers: { "Content-Type": "multipart/form-data" } }
-      );
-      return response.data.profilePhotoUrl;
+      // Compress the image
+      const compressedBlob = await compressImage(file);
+
+      // Create a unique filename
+      const filename = `admin_profiles/${Date.now()}_${file.name}`;
+
+      // Get Firebase Storage reference
+      const storage = getStorage();
+      const storageRef = ref(storage, filename);
+
+      // Upload the compressed image
+      await uploadBytes(storageRef, compressedBlob);
+
+      // Get the download URL
+      const downloadURL = await getDownloadURL(storageRef);
+      return downloadURL;
     } catch (error) {
-      console.error("Error uploading to AWS:", error);
+      console.error("Error uploading image:", error);
       return null;
     }
   };
@@ -204,43 +259,54 @@ const AdminManagement = () => {
       return;
     }
 
-    let uploadedImageUrl = "";
-    if (profileImage) {
-      uploadedImageUrl = await uploadProfilePhotoToAWS(profileImage);
-      if (!uploadedImageUrl) {
-        alert("Failed to upload profile image.");
-        return;
-      }
-    }
-
     try {
-      const response = await axios.post(
-        "http://localhost:4001/api/create-admin",
-        {
-          name,
-          email,
-          password,
-          roles: [], // Send selected role as an array
-          profilePhoto: uploadedImageUrl || "",
-          status: "Active",
-          stationAssignedTo: null,
-        }
+      // First create the user in Firebase Authentication
+      const auth = getAuth();
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        email,
+        password
       );
+      const user = userCredential.user;
 
-      if (response.data.success) {
-        alert("Admin added successfully!");
-        setName("");
-        setEmail("");
-        setPassword("");
-        setProfileImage(null);
-        setImageUrl("");
-        setShowModal(false);
-      } else {
-        alert("Error: " + response.data.message);
+      // Upload profile photo if exists
+      let uploadedImageUrl = "";
+      if (profileImage) {
+        uploadedImageUrl = await uploadProfilePhoto(profileImage);
+        if (!uploadedImageUrl) {
+          alert("Failed to upload profile image.");
+          return;
+        }
       }
+
+      // Create the admin document in Firestore
+      const adminData = {
+        uid: user.uid,
+        name,
+        email,
+        roles: [selectedRole],
+        profilePhoto: uploadedImageUrl || "",
+        status: "Active",
+        stationAssignedTo: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      await addDoc(collection(db, "admins"), adminData);
+
+      alert("Admin added successfully!");
+      setName("");
+      setEmail("");
+      setPassword("");
+      setProfileImage(null);
+      setImageUrl("");
+      setShowModal(false);
     } catch (error) {
       console.error("Error creating admin:", error);
-      alert("There was an error creating the admin. Please try again.");
+      alert(
+        error.message ||
+          "There was an error creating the admin. Please try again."
+      );
     }
   };
 
@@ -272,8 +338,8 @@ const AdminManagement = () => {
       return;
     }
 
-    // Upload new image to AWS S3
-    const uploadedImageUrl = await uploadProfilePhotoToAWS(editProfileImage);
+    // Upload new image to Firebase Storage
+    const uploadedImageUrl = await uploadProfilePhoto(editProfileImage);
     if (!uploadedImageUrl) {
       alert("Failed to upload new profile image.");
       return;

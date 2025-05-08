@@ -30,8 +30,8 @@ import ContentHeader from "./ContentHeader"; // Add this import
 dayjs.extend(weekOfYear);
 dayjs.extend(isBetween);
 const HighlightedText = ({ text }) => {
-  // Updated regex to not match numbers in CO2 and be more precise
-  const regex = /(?<!CO)(?<![\d.])(\d+\.?\d*)/g;
+  // Updated regex to not match numbers that are part of station names
+  const regex = /(?<![A-Za-z])(?<!-)(?<!\/)\b(\d+\.?\d*)\b(?![A-Za-z])/g;
   const parts = text.split(regex);
 
   return (
@@ -311,22 +311,19 @@ const SystemAnalytics = () => {
                 report improved cardiovascular health and reduced stress levels, creating a healthier community.`;
 
       case "distance":
-        const carEmissions = total * 0.251;
-        const congestionReduction = total * 0.15;
+        // One bike = 0.25 car units (Metro Manila standard)
+        const carUnitEquivalent = 0.25;
+        const carSpaceReduction = total * carUnitEquivalent;
+
         return `EcoRide users covered ${total.toFixed(
           2
-        )} km by bike ${timePhrase}, directly alleviating 
-                traffic congestion in Barangay Parada's busiest corridors. This represents approximately 
-                ${Math.round(
-                  total / 3
-                )} car trips removed from local roads, reducing congestion by an 
-                estimated ${congestionReduction.toFixed(
-                  1
-                )}%. Each kilometer cycled improves traffic flow 
-                while preventing ${carEmissions.toFixed(
-                  2
-                )} kg of CO2 emissions, supporting Parada's 
-                commitment to sustainable urban mobility.`;
+        )} km by bike ${timePhrase}. 
+                Based on Metro Manila traffic research, each bike takes up only 0.25 car units 
+                of road space, representing approximately ${Math.round(
+                  carSpaceReduction
+                )} car-equivalent 
+                trips removed from local roads. This efficient use of road space helps reduce 
+                traffic congestion in Barangay Parada's busiest areas.`;
 
       case "duration":
         const hours = Math.floor(total / 60);

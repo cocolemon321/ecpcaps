@@ -10,6 +10,7 @@ import AdminManagement from "./components/AdminManagement";
 import RateManagement from "./components/RateManagement";
 import SystemAnalytics from "./components/SystemAnalytics";
 import RideDetails from "./components/RideDetails"; // Add this import
+import CoverageArea from "./components/CoverageArea"; // Add this import
 import ErrorBoundary from "./components/ErrorBoundary";
 import "./App.css";
 
@@ -55,6 +56,10 @@ const App = () => {
           <Route
             path="/ride-details"
             element={user ? <RideDetails /> : <Login />}
+          />
+          <Route
+            path="/coverage-area"
+            element={user ? <CoverageArea /> : <Login />}
           />
           <Route path="/" element={!user ? <Login /> : <Dashboard />} />
         </Routes>

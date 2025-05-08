@@ -12,6 +12,7 @@ import {
   BiUserCheck,
   BiCycling,
   BiTable,
+  BiMap,
 } from "react-icons/bi";
 import "../styles/Sidebar.css";
 
@@ -117,6 +118,14 @@ const Sidebar = () => {
         >
           <BiTable />
           <span>Ride Details</span>
+        </div>
+
+        <div
+          className={`menu-item ${isActive("/coverage-area") ? "active" : ""}`}
+          onClick={() => navigate("/coverage-area")}
+        >
+          <BiMap />
+          <span>Coverage Area</span>
         </div>
 
         {/* Logout Button */}

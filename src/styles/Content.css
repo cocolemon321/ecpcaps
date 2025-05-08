@@ -512,8 +512,8 @@
   color: #666;
 }
 
-/* Custom Marker */
-.custom-marker {
+/* Remove or comment out this section since it's for stations */
+/* .custom-marker {
   width: 20px;
   height: 20px;
   background-color: #4CAF50;
@@ -521,9 +521,30 @@
   border-radius: 50%;
   box-shadow: 0 0 10px rgba(0,0,0,0.3);
   cursor: pointer;
+} */
+
+/* User location marker specific styles */
+.user-location-marker {
+  width: 15px;
+  height: 15px;
+  background-color: #FF0000; /* Red color for user markers */
+  border: 2px solid white;
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  cursor: pointer;
 }
 
-/* Ride Popup */
+/* Popup styles for user location */
+.simple-popup {
+  padding: 8px;
+  font-size: 12px;
+}
+
+.simple-popup p {
+  margin: 2px 0;
+  white-space: nowrap;
+}
+
 .ride-popup {
   padding: 10px;
   font-size: 12px;
@@ -631,4 +652,9 @@
   color: #666;
   font-size: 0.9rem;
   margin-top: 0.25rem;
+}
+
+/* Remove margin-left from content-container when inside .content */
+.content .content-container {
+  margin-left: 0 !important;
 }
