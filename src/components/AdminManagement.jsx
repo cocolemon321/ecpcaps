@@ -26,6 +26,7 @@ import {
   FaPencilAlt,
   FaCamera,
   FaUserTag,
+  FaUserTimes,
 } from "react-icons/fa";
 import dayjs from "dayjs";
 
@@ -310,14 +311,23 @@ const AdminManagement = () => {
     }
   };
 
-  // Handle delete admin
-  const handleDeleteAdmin = async (adminId) => {
-    if (!window.confirm("Are you sure you want to delete this admin?")) return;
+  // Replace handleDeleteAdmin with handleDeactivateAdmin
+  const handleDeactivateAdmin = async (adminId) => {
+    if (!window.confirm("Are you sure you want to deactivate this admin?"))
+      return;
 
     try {
-      await deleteDoc(doc(db, "admins", adminId));
+      const adminRef = doc(db, "admins", adminId);
+      await updateDoc(adminRef, {
+        isDeactivated: true,
+        status: "Inactive",
+        deactivatedAt: new Date(),
+        updatedAt: new Date(),
+      });
+      alert("Admin account has been deactivated");
     } catch (error) {
-      console.error("Error deleting admin:", error);
+      console.error("Error deactivating admin:", error);
+      alert("Failed to deactivate admin account");
     }
   };
 
@@ -437,11 +447,12 @@ const AdminManagement = () => {
                       </button>
                       <button
                         onClick={() => {
-                          handleDeleteAdmin(admin.id);
+                          handleDeactivateAdmin(admin.id);
                           setShowOptions(null);
                         }}
+                        className="deactivate-btn"
                       >
-                        <FaTrashAlt /> Delete Admin
+                        <FaUserTimes /> Deactivate Admin
                       </button>
                     </div>
                   )}

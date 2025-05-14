@@ -9,6 +9,8 @@ import {
   addDoc,
   deleteDoc,
   getDoc,
+  query,
+  where,
 } from "firebase/firestore";
 import Layout from "./Layout";
 import ContentHeader from "./ContentHeader";
@@ -62,15 +64,31 @@ const UserManagement = () => {
     }
   };
 
-  // Fetch pending users from Firestore
+  // Update the fetchPendingUsers function
   const fetchPendingUsers = async () => {
     try {
-      const querySnapshot = await getDocs(collection(db, "pending_users"));
-      const usersList = querySnapshot.docs.map((doc) => ({
+      // Get both pending_users and approved_users with isPending=true
+      const [pendingSnapshot, approvedSnapshot] = await Promise.all([
+        getDocs(collection(db, "pending_users")),
+        getDocs(
+          query(
+            collection(db, "approved_users"),
+            where("isPending", "==", true)
+          )
+        ),
+      ]);
+
+      const pendingUsers = pendingSnapshot.docs.map((doc) => ({
         uid: doc.id,
         ...doc.data(),
       }));
-      setPendingUsers(usersList);
+
+      const pendingApprovedUsers = approvedSnapshot.docs.map((doc) => ({
+        uid: doc.id,
+        ...doc.data(),
+      }));
+
+      setPendingUsers([...pendingUsers, ...pendingApprovedUsers]);
     } catch (error) {
       console.error("Error fetching pending users:", error);
     }
@@ -284,12 +302,14 @@ const UserManagement = () => {
     calculateStats();
   }, [registeredUsers, pendingUsers]);
 
-  const StatusIndicator = ({ status, addressValidated }) => {
+  // Update the StatusIndicator component
+  const StatusIndicator = ({ status, addressValidated, isPending }) => {
     if (status === "approved") {
       return (
         <div className="status-container">
           <FaCheck className="status-icon approved" title="Approved" />
-          {addressValidated === false && (
+          {/* Only show warning if isPending is true */}
+          {isPending && !addressValidated && (
             <span
               className="warning-text"
               title="Address not in validated list"
@@ -406,9 +426,10 @@ const UserManagement = () => {
                 <thead>
                   <tr>
                     <th>Status</th>
-                    <th className="profile-column">Profile Photo</th>
+                    <th>Profile Photo</th>
+                    <th>ID Photos</th>
                     <th>Name</th>
-                    <th>Email</th>
+                    <th>Contact Info</th>
                     <th>Address</th>
                     <th>Actions</th>
                   </tr>
@@ -436,9 +457,50 @@ const UserManagement = () => {
                           <div className="no-photo">No Photo</div>
                         )}
                       </td>
+                      <td className="id-photos-column">
+                        <div className="id-photos">
+                          {user.frontIdUrl && (
+                            <img
+                              src={user.frontIdUrl}
+                              alt="ID Front"
+                              className="id-thumbnail"
+                              onClick={() => openImageModal(user.frontIdUrl)}
+                            />
+                          )}
+                          {user.backIdUrl && (
+                            <img
+                              src={user.backIdUrl}
+                              alt="ID Back"
+                              className="id-thumbnail"
+                              onClick={() => openImageModal(user.backIdUrl)}
+                            />
+                          )}
+                        </div>
+                      </td>
                       <td>{`${user.first_name} ${user.middle_name} ${user.surname}`}</td>
-                      <td>{user.email}</td>
-                      <td>{user.address}</td>
+                      <td>
+                        <div className="contact-info">
+                          <p>
+                            <strong>Phone:</strong> {user.phone_number}
+                          </p>
+                          <p>
+                            <strong>Email:</strong> {user.email}
+                          </p>
+                          <p>
+                            <strong>ID Number:</strong> {user.id_number}
+                          </p>
+                        </div>
+                      </td>
+                      <td>
+                        <div className="address-info">
+                          <p>{user.address}</p>
+                          {!user.addressValidated && (
+                            <span className="unvalidated-address">
+                              ⚠️ Address not in validated list
+                            </span>
+                          )}
+                        </div>
+                      </td>
                       <td className="action-buttons">
                         <button
                           onClick={() => handleUserAction(user.uid, "approve")}
@@ -547,7 +609,6 @@ const UserManagement = () => {
         {/* Registered Users Section */}
         <div className="section">
           <h2>Registered Users</h2>
-          {/* Search Box */}
           <input
             type="text"
             placeholder="🔍 Search registered users..."
@@ -555,7 +616,6 @@ const UserManagement = () => {
             onChange={(e) => setRegisteredUsersSearch(e.target.value)}
             className="search-box"
           />
-          {/* User Table */}
           {filteredRegisteredUsers.length === 0 ? (
             <p>No registered users found.</p>
           ) : (
@@ -564,9 +624,10 @@ const UserManagement = () => {
                 <thead>
                   <tr>
                     <th>Status</th>
-                    <th className="profile-column">Profile Photo</th>
+                    <th>Profile Photo</th>
+                    <th>ID Photos</th>
                     <th>Name</th>
-                    <th>Email</th>
+                    <th>Contact Info</th>
                     <th>Address</th>
                   </tr>
                 </thead>
@@ -577,6 +638,7 @@ const UserManagement = () => {
                         <StatusIndicator
                           status={user.status}
                           addressValidated={user.addressValidated}
+                          isPending={user.isPending || false}
                         />
                       </td>
                       <td className="profile-column">
@@ -593,9 +655,45 @@ const UserManagement = () => {
                           <div className="no-photo">No Photo</div>
                         )}
                       </td>
+                      <td className="id-photos-column">
+                        <div className="id-photos">
+                          {user.frontIdUrl && (
+                            <img
+                              src={user.frontIdUrl}
+                              alt="ID Front"
+                              className="id-thumbnail"
+                              onClick={() => openImageModal(user.frontIdUrl)}
+                            />
+                          )}
+                          {user.backIdUrl && (
+                            <img
+                              src={user.backIdUrl}
+                              alt="ID Back"
+                              className="id-thumbnail"
+                              onClick={() => openImageModal(user.backIdUrl)}
+                            />
+                          )}
+                        </div>
+                      </td>
                       <td>{`${user.first_name} ${user.middle_name} ${user.surname}`}</td>
-                      <td>{user.email}</td>
-                      <td>{user.address}</td>
+                      <td>
+                        <div className="contact-info">
+                          <p>
+                            <strong>Phone:</strong> {user.phone_number}
+                          </p>
+                          <p>
+                            <strong>Email:</strong> {user.email}
+                          </p>
+                          <p>
+                            <strong>ID Number:</strong> {user.id_number}
+                          </p>
+                        </div>
+                      </td>
+                      <td>
+                        <div className="address-info">
+                          <p>{user.address}</p>
+                        </div>
+                      </td>
                     </tr>
                   ))}
                 </tbody>

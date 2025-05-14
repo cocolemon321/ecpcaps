@@ -43,6 +43,30 @@ const RateManagement = () => {
     key: "revenue",
     direction: "desc",
   });
+  // Add to existing state declarations
+  const [remittances, setRemittances] = useState([]);
+  const [showRemittances, setShowRemittances] = useState(false);
+  // Add these near your other state declarations
+  const [processingRemittance, setProcessingRemittance] = useState(false);
+
+  // Add after other fetch functions
+  const fetchRemittances = async () => {
+    try {
+      const remittancesRef = collection(db, "remittances");
+      const q = query(remittancesRef, orderBy("dateSubmitted", "desc"));
+      const snapshot = await getDocs(q);
+      const remittanceData = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      setRemittances(remittanceData);
+    } catch (error) {
+      console.error("Error fetching remittances:", error);
+    }
+  };
+
+  const [deletedStationRevenue, setDeletedStationRevenue] = useState([]);
+  const [showDeletedStations, setShowDeletedStations] = useState(false);
 
   const handleSort = (key) => {
     setSortConfig({
@@ -58,6 +82,7 @@ const RateManagement = () => {
     fetchRates();
     fetchRateHistory();
     fetchStationRevenue();
+    fetchRemittances();
   }, []);
 
   useEffect(() => {
@@ -94,99 +119,103 @@ const RateManagement = () => {
     }
   };
 
+  // Helper function to check if date is within selected period
+  const isWithinTimePeriod = (date, period) => {
+    const now = dayjs();
+    switch (period) {
+      case "daily":
+        return dayjs(date).isSame(now, "day");
+      case "weekly":
+        return dayjs(date).isAfter(now.subtract(1, "week"));
+      case "monthly":
+        return dayjs(date).isAfter(now.subtract(1, "month"));
+      case "all":
+        return true;
+      default:
+        return true;
+    }
+  };
+
   const fetchStationRevenue = async () => {
     try {
-      // Get all stations first
-      const stationsRef = collection(db, "stations");
-      const stationsSnap = await getDocs(stationsRef);
-      const stationMap = new Map();
-
-      // Initialize stations with zero values
-      stationsSnap.forEach((station) => {
-        const stationData = station.data();
-        stationMap.set(station.id, {
-          id: station.id,
-          stationName: stationData.stationName,
-          revenue: 0,
-          rides: 0, // Simplified to track total rides
-        });
-      });
-
       // Get all rides from ride_history
       const ridesRef = collection(db, "ride_history");
       const ridesSnap = await getDocs(ridesRef);
-      const totalRides = ridesSnap.docs.length;
 
-      const now = dayjs();
-      const periodStats = {
+      // Initialize data structures
+      let activeRevenue = {};
+      let deletedRevenue = {};
+      let periodStats = {
         daily: { revenue: 0, rides: 0 },
         weekly: { revenue: 0, rides: 0 },
         monthly: { revenue: 0, rides: 0 },
-        total: { revenue: 0, rides: 0 },
+        all: { revenue: 0, rides: 0 },
       };
 
-      // Process all rides
+      // Get current active stations
+      const stationsRef = collection(db, "stations");
+      const stationsSnap = await getDocs(stationsRef);
+      const activeStations = new Map(
+        stationsSnap.docs.map((doc) => [doc.id, doc.data().stationName])
+      );
+
+      // Process each ride
       ridesSnap.docs.forEach((doc) => {
         const ride = doc.data();
-        const rideDate = dayjs(ride.rideEndedAt.toDate());
+        const rideDate = ride.rideEndedAt.toDate();
         const amount = Number(ride.amountPaid || 0);
+        const stationId = ride.startStation;
+        const stationName = ride.startStationName || "Unknown Station";
 
-        // Only process rides for the selected time period
-        const shouldInclude =
-          timePeriod === "all"
-            ? true
-            : timePeriod === "daily"
-            ? rideDate.isSame(now, "day")
-            : timePeriod === "weekly"
-            ? rideDate.isAfter(now.subtract(1, "week"))
-            : timePeriod === "monthly"
-            ? rideDate.isAfter(now.subtract(1, "month"))
-            : true;
+        // Check if ride should be counted for current time period
+        if (!isWithinTimePeriod(rideDate, timePeriod)) return;
 
-        if (shouldInclude && ride.startStation) {
-          const stationData = stationMap.get(ride.startStation);
-          if (stationData) {
-            stationData.rides += 1;
-            stationData.revenue += amount;
+        // Update period stats
+        periodStats[timePeriod].revenue += amount;
+        periodStats[timePeriod].rides += 1;
+
+        if (stationId) {
+          // Check if station is active or deleted
+          if (activeStations.has(stationId)) {
+            // Active station
+            if (!activeRevenue[stationId]) {
+              activeRevenue[stationId] = {
+                id: stationId,
+                stationName: activeStations.get(stationId),
+                revenue: 0,
+                rides: 0,
+              };
+            }
+            activeRevenue[stationId].revenue += amount;
+            activeRevenue[stationId].rides += 1;
+          } else {
+            // Deleted station
+            if (!deletedRevenue[stationId]) {
+              deletedRevenue[stationId] = {
+                id: stationId,
+                stationName: stationName,
+                revenue: 0,
+                rides: 0,
+                isDeleted: true,
+              };
+            }
+            deletedRevenue[stationId].revenue += amount;
+            deletedRevenue[stationId].rides += 1;
           }
         }
-
-        // Update total stats
-        periodStats.total.rides += 1;
-        periodStats.total.revenue += amount;
-
-        // Update period-specific stats
-        if (rideDate.isSame(now, "day")) {
-          periodStats.daily.rides += 1;
-          periodStats.daily.revenue += amount;
-        }
-        if (rideDate.isAfter(now.subtract(1, "week"))) {
-          periodStats.weekly.rides += 1;
-          periodStats.weekly.revenue += amount;
-        }
-        if (rideDate.isAfter(now.subtract(1, "month"))) {
-          periodStats.monthly.rides += 1;
-          periodStats.monthly.revenue += amount;
-        }
       });
 
-      setStats({
-        daily: periodStats.daily,
-        weekly: periodStats.weekly,
-        monthly: periodStats.monthly,
-        total: periodStats.total,
-        all: periodStats.total, // Add this line - 'all' shows the same as total
-      });
+      // Convert to arrays
+      const activeStationRevenue = Object.values(activeRevenue);
+      const deletedStationRevenue = Object.values(deletedRevenue);
 
-      // Convert to array and sort by revenue
-      const stationRevenueArray = Array.from(stationMap.values())
-        .sort((a, b) => b.revenue - a.revenue)
-        .map((station) => ({
-          ...station,
-          totalSystemRides: totalRides,
-        }));
-
-      setStationRevenue(stationRevenueArray);
+      // Update state
+      setStationRevenue(activeStationRevenue);
+      setDeletedStationRevenue(deletedStationRevenue);
+      setStats((prevStats) => ({
+        ...prevStats,
+        [timePeriod]: periodStats[timePeriod],
+      }));
     } catch (error) {
       console.error("Error fetching station revenue:", error);
     }
@@ -249,6 +278,34 @@ const RateManagement = () => {
     } catch (error) {
       console.error("Error updating rate:", error);
       alert("Failed to update the rate. See console for details.");
+    }
+  };
+
+  // Add this function before the return statement
+  const handleRemittanceAction = async (remitId, newStatus) => {
+    if (
+      !window.confirm(`Are you sure you want to ${newStatus} this remittance?`)
+    ) {
+      return;
+    }
+
+    setProcessingRemittance(true);
+    try {
+      const remitRef = doc(db, "remittances", remitId);
+      await updateDoc(remitRef, {
+        status: newStatus,
+        processedAt: new Date(),
+        processedBy: auth.currentUser.uid,
+      });
+
+      // Refresh remittances
+      fetchRemittances();
+      alert(`Remittance ${newStatus} successfully`);
+    } catch (error) {
+      console.error("Error processing remittance:", error);
+      alert("Failed to process remittance");
+    } finally {
+      setProcessingRemittance(false);
     }
   };
 
@@ -339,6 +396,14 @@ const RateManagement = () => {
               >
                 This Month
               </button>
+              <button
+                className={`filter-btn ${showDeletedStations ? "active" : ""}`}
+                onClick={() => setShowDeletedStations(!showDeletedStations)}
+              >
+                {showDeletedStations
+                  ? "Hide Deleted Stations"
+                  : "Show Deleted Stations"}
+              </button>
             </div>
           </div>
           <div className="table-container">
@@ -363,6 +428,7 @@ const RateManagement = () => {
                 </tr>
               </thead>
               <tbody>
+                {/* Active Stations */}
                 {stationRevenue
                   .sort((a, b) => {
                     if (sortConfig.key === "stationName") {
@@ -381,6 +447,29 @@ const RateManagement = () => {
                       <td>{station.rides}</td>
                     </tr>
                   ))}
+
+                {/* Deleted Stations */}
+                {showDeletedStations &&
+                  deletedStationRevenue
+                    .sort((a, b) => {
+                      if (sortConfig.key === "stationName") {
+                        return sortConfig.direction === "asc"
+                          ? a.stationName.localeCompare(b.stationName)
+                          : b.stationName.localeCompare(a.stationName);
+                      }
+                      return sortConfig.direction === "asc"
+                        ? a[sortConfig.key] - b[sortConfig.key]
+                        : b[sortConfig.key] - a[sortConfig.key];
+                    })
+                    .map((station) => (
+                      <tr key={station.id} className="deleted-station">
+                        <td>{station.stationName} (Deleted)</td>
+                        <td>{station.revenue.toFixed(2)}</td>
+                        <td>{station.rides}</td>
+                      </tr>
+                    ))}
+
+                {/* Total Row */}
                 <tr className="total-row">
                   <td>
                     <strong>Total</strong>
@@ -474,6 +563,103 @@ const RateManagement = () => {
             </div>
           </div>
         )}
+        {/* Remittance Status Section */}
+        <div className="remittance-section">
+          <div className="section-header">
+            <h3>Station Remittances</h3>
+            <button
+              className="history-toggle-btn"
+              onClick={() => setShowRemittances(!showRemittances)}
+            >
+              {showRemittances ? "Hide Remittances" : "Show Remittances"}
+            </button>
+          </div>
+
+          {showRemittances && (
+            <div className="table-container">
+              <table className="remittance-table">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Station</th>
+                    <th>Period</th>
+                    <th>Amount (₱)</th>
+                    <th>Status</th>
+                    <th>Proof</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {remittances.map((remit) => (
+                    <tr key={remit.id} className={`status-${remit.status}`}>
+                      <td>
+                        {dayjs(remit.dateSubmitted?.toDate()).format(
+                          "MMM D, YYYY HH:mm"
+                        )}
+                      </td>
+                      <td>{remit.stationName}</td>
+                      <td>
+                        {dayjs(remit.collectedFrom?.toDate()).format("MMM D")} -{" "}
+                        {dayjs(remit.collectedTo?.toDate()).format(
+                          "MMM D, YYYY"
+                        )}
+                      </td>
+                      <td>₱{remit.amount.toFixed(2)}</td>
+                      <td>
+                        <span className={`status-badge ${remit.status}`}>
+                          {remit.status}
+                        </span>
+                      </td>
+                      <td>
+                        {remit.proofOfPayment && (
+                          <button
+                            className="view-proof-btn"
+                            onClick={() =>
+                              window.open(remit.proofOfPayment, "_blank")
+                            }
+                          >
+                            View Proof
+                          </button>
+                        )}
+                      </td>
+                      <td>
+                        {remit.status === "pending" && (
+                          <div className="action-buttons">
+                            <button
+                              className="confirm-btn"
+                              onClick={() =>
+                                handleRemittanceAction(remit.id, "confirmed")
+                              }
+                              disabled={processingRemittance}
+                            >
+                              Confirm
+                            </button>
+                            <button
+                              className="reject-btn"
+                              onClick={() =>
+                                handleRemittanceAction(remit.id, "rejected")
+                              }
+                              disabled={processingRemittance}
+                            >
+                              Reject
+                            </button>
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                  {remittances.length === 0 && (
+                    <tr>
+                      <td colSpan="7" className="no-data">
+                        No remittances found
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
       </div>
     </Layout>
   );

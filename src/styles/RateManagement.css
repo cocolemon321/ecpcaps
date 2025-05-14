@@ -187,27 +187,43 @@
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
   }
   
-  .history-header {
+  .history-header,
+  .section-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 1rem;
+    margin-bottom: 1.5rem;
+    padding: 0.5rem 0;
   }
   
   .history-toggle-btn {
+    margin-left: auto;
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: var(--border-radius-sm);
+    cursor: pointer;
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    padding: 0.5rem 1rem;
-    background: var(--primary-color);
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
+    transition: opacity 0.2s ease; /* Change transition to opacity */
   }
+  
   .history-toggle-btn:hover {
-    background: var(--secondary-color);
-    transform: scale(1.05); /* Slight scaling effect */
+    opacity: 0.9; /* Use opacity instead of changing background color */
+    color: white; /* Ensure text stays white */
+  }
+  
+  .history-toggle-btn:active {
+    opacity: 0.8; /* Darker when clicked */
+  }
+  
+  .history-header h3,
+  .section-header h3 {
+    margin: 0;
+    font-size: 1.2rem;
+    color: var(--primary-color);
   }
   
   .history-table {
@@ -294,3 +310,168 @@
     color: white;
     border-color: #009C8C;
   }
+
+  .deleted-station {
+    background-color: #fff3cd;
+    color: #856404;
+  }
+
+  .deleted-station td {
+    font-style: italic;
+  }
+
+  .filter-btn.active {
+    background-color: var(--primary-color);
+    color: white;
+  }
+.remittance-section {
+  margin-top: 2rem;
+  background: white;
+  border-radius: var(--border-radius-lg);
+  padding: 1.5rem;
+  box-shadow: var(--shadow-sm);
+}
+
+.remittance-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+}
+
+.remittance-table th,
+.remittance-table td {
+  padding: 12px 16px;
+  text-align: center;
+  vertical-align: middle;
+  border-bottom: 1px solid #eee;
+}
+
+.status-badge {
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  display: inline-block;
+  min-width: 80px;
+  text-align: center;
+}
+
+.status-badge.pending {
+  background-color: #fff3cd;
+  color: #856404;
+}
+
+.status-badge.confirmed {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.status-badge.rejected {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+.view-proof-link {
+  color: var(--primary-color);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.view-proof-link:hover {
+  text-decoration: underline;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+}
+
+.confirm-btn,
+.reject-btn {
+  padding: 4px 8px;
+  border: none;
+  border-radius: var(--border-radius-sm);
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: opacity 0.2s ease;
+}
+
+.confirm-btn {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+.reject-btn {
+  background-color: #dc3545;
+  color: white;
+}
+
+.confirm-btn:hover,
+.reject-btn:hover {
+  opacity: 0.9;
+}
+
+.confirm-btn:disabled,
+.reject-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.status-confirmed td {
+  background-color: #f8fff9;
+}
+
+.status-rejected td {
+  background-color: #fff8f8;
+}
+
+.status-badge.confirmed {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.status-badge.rejected {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+.view-proof-btn {
+  margin: 0 auto;
+  display: block;
+  background: none;
+  border: none;
+  color: var(--primary-color);
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 4px 8px;
+  text-align: center;
+}
+
+.view-proof-btn:hover {
+  opacity: 0.8;
+}
+
+.no-data {
+  text-align: center;
+  padding: 2rem !important;
+  color: #666;
+  font-style: italic;
+}
+
+/* Ensure table cells have consistent padding and alignment */
+.remittance-table td {
+  vertical-align: middle;
+  text-align: left;
+  padding: 12px 16px;
+}
+
+/* Add zebra striping for better readability */
+.remittance-table tbody tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+/* Ensure table header alignment matches cells */
+.remittance-table thead th {
+  text-align: center;
+}

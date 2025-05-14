@@ -171,8 +171,16 @@
 }
 
 .id-thumbnail {
-  width: 60px;
-  height: 40px;
+  width: 50px;
+  height: 30px;
+  object-fit: cover;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.id-thumbnail:hover {
+  transform: scale(1.1);
 }
 
 /* Responsive adjustments */
@@ -604,4 +612,91 @@
 
 .close-btn:hover {
   background: #5a6268;
+}
+
+.id-photos {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.contact-info p {
+  margin: 2px 0;
+  font-size: 0.9rem;
+}
+
+.address-info {
+  position: relative;
+}
+
+.unvalidated-address {
+  color: #ff9800;
+  font-size: 0.8rem;
+  display: block;
+  margin-top: 4px;
+}
+
+/* Update existing modal styles for ID preview */
+.image-modal img {
+  max-width: 90%;
+  max-height: 90vh;
+  object-fit: contain;
+}
+
+/* Table layout fixes */
+.user-list table {
+  width: 100%;
+  table-layout: fixed;
+}
+
+/* Column width adjustments */
+.user-list th, .user-list td {
+  padding: 8px;
+  vertical-align: middle;
+}
+
+/* Set specific widths for each column */
+.user-list th:nth-child(1), 
+.user-list td:nth-child(1) {
+  width: 60px; /* Status column */
+}
+
+.user-list th:nth-child(2), 
+.user-list td:nth-child(2) {
+  width: 80px; /* Profile photo column */
+}
+
+.user-list th:nth-child(3), 
+.user-list td:nth-child(3) {
+  width: 120px; /* ID photos column */
+}
+
+.user-list th:nth-child(4), 
+.user-list td:nth-child(4) {
+  width: 180px; /* Name column */
+}
+
+.user-list th:nth-child(5), 
+.user-list td:nth-child(5) {
+  width: 200px; /* Contact info column */
+}
+
+/* Profile thumbnail size adjustment */
+.profile-thumbnail {
+  width: 50px;
+  height: 50px;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+/* Make text content wrap properly */
+.user-list td {
+  white-space: normal;
+  word-wrap: break-word;
+}
+
+/* Contact info container */
+.contact-info {
+  font-size: 0.9rem;
+  line-height: 1.4;
 }

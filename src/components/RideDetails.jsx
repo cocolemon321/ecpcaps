@@ -30,6 +30,9 @@ const RideDetails = () => {
     totalCarbonSaved: 0,
   });
 
+  // Add this new state near other state declarations
+  const [stationFilter, setStationFilter] = useState("all");
+
   useEffect(() => {
     fetchData();
   }, []);
@@ -104,6 +107,12 @@ const RideDetails = () => {
     }
   };
 
+  // Replace your existing filterRidesByStation function with this:
+  const filterRidesByStation = (rides) => {
+    if (stationFilter === "all") return rides;
+    return rides.filter((ride) => ride.endStation === stationFilter);
+  };
+
   // Update the stats calculation in useEffect
   useEffect(() => {
     const filteredRides = filterRidesByTime(rides);
@@ -138,26 +147,24 @@ const RideDetails = () => {
     });
   };
 
+  // Modify the sortedAndFilteredRides useMemo
   const sortedAndFilteredRides = React.useMemo(() => {
     // First filter by time
     const timeFiltered = filterRidesByTime(rides);
-
+    // Then filter by station
+    const stationFiltered = filterRidesByStation(timeFiltered);
     // Then sort
-    return [...timeFiltered].sort((a, b) => {
+    return [...stationFiltered].sort((a, b) => {
       if (sortConfig.key === "rideEndedAt") {
         return sortConfig.direction === "asc"
           ? a[sortConfig.key] - b[sortConfig.key]
           : b[sortConfig.key] - a[sortConfig.key];
       }
       return sortConfig.direction === "asc"
-        ? a[sortConfig.key] > b[sortConfig.key]
-          ? 1
-          : -1
-        : a[sortConfig.key] < b[sortConfig.key]
-        ? 1
-        : -1;
+        ? String(a[sortConfig.key]).localeCompare(String(b[sortConfig.key]))
+        : String(b[sortConfig.key]).localeCompare(String(a[sortConfig.key]));
     });
-  }, [rides, timeFilter, sortConfig]);
+  }, [rides, timeFilter, stationFilter, sortConfig]);
 
   const paginatedRides = sortedAndFilteredRides.slice(
     (currentPage - 1) * rowsPerPage,
@@ -165,6 +172,18 @@ const RideDetails = () => {
   );
 
   const totalPages = Math.ceil(sortedAndFilteredRides.length / rowsPerPage);
+
+  // Add this before the return statement
+  const tableTotals = sortedAndFilteredRides.reduce(
+    (acc, ride) => ({
+      duration: acc.duration + (ride.duration || 0),
+      distance: acc.distance + (ride.distance || 0),
+      calories: acc.calories + (ride.caloriesBurned || 0),
+      carbon: acc.carbon + (ride.carbonSaved || 0),
+      amount: acc.amount + (ride.amountPaid || 0),
+    }),
+    { duration: 0, distance: 0, calories: 0, carbon: 0, amount: 0 }
+  );
 
   return (
     <Layout>
@@ -198,6 +217,20 @@ const RideDetails = () => {
               This Month
             </button>
           </div>
+          <div className="station-filter">
+            <select
+              value={stationFilter}
+              onChange={(e) => setStationFilter(e.target.value)}
+              className="filter-select"
+            >
+              <option value="all">All End Stations</option>
+              {Object.entries(stations).map(([id, name]) => (
+                <option key={id} value={id}>
+                  {name}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
         {/* Update the stats grid in the JSX */}
         <div className="stats-grid">
@@ -230,6 +263,29 @@ const RideDetails = () => {
           <div className="loading">Loading...</div>
         ) : (
           <>
+            <div className="station-totals">
+              {stationFilter !== "all" && (
+                <div className="selected-station-stats">
+                  <h3>Statistics for {stations[stationFilter]}</h3>
+                  <div className="stats-row">
+                    <span>Total Rides: {sortedAndFilteredRides.length}</span>
+                    <span>
+                      Total Revenue: ₱
+                      {sortedAndFilteredRides
+                        .reduce((sum, ride) => sum + (ride.amountPaid || 0), 0)
+                        .toFixed(2)}
+                    </span>
+                    <span>
+                      Total Distance:{" "}
+                      {sortedAndFilteredRides
+                        .reduce((sum, ride) => sum + (ride.distance || 0), 0)
+                        .toFixed(2)}{" "}
+                      km
+                    </span>
+                  </div>
+                </div>
+              )}
+            </div>
             <div className="table-container">
               <table>
                 <thead>

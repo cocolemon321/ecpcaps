@@ -188,14 +188,30 @@ const StationManagement = () => {
   };
 
   const handleDelete = async (stationId) => {
-    if (!window.confirm("Are you sure you want to delete this station?"))
-      return;
+    // Find station details for the confirmation message
+    const stationToDelete = stations.find(
+      (station) => station.id === stationId
+    );
+
+    // Show confirmation dialog with station details
+    const isConfirmed = window.confirm(
+      `Are you sure you want to delete this station?\n\n` +
+        `Station Name: ${stationToDelete.stationName}\n` +
+        `Address: ${stationToDelete.stationAddress}\n` +
+        `Regular Bikes: ${stationToDelete.totalRegularBikes || 0}\n` +
+        `Electric Bikes: ${stationToDelete.totalElectricBikes || 0}\n` +
+        `Tanod Assigned: ${stationToDelete.tanodAssignedName || "None"}\n\n` +
+        `This action cannot be undone!`
+    );
+
+    if (!isConfirmed) return;
+
     try {
       const stationRef = doc(db, "stations", stationId);
       const stationSnap = await getDoc(stationRef);
       const stationData = stationSnap.data();
 
-      // Handle array of assigned admins
+      // 1. Handle assigned admins
       const assignedTanods = stationData?.tanodAssigned || [];
       const tanodArray = Array.isArray(assignedTanods)
         ? assignedTanods
@@ -209,11 +225,37 @@ const StationManagement = () => {
       );
       await Promise.all(adminUpdates);
 
+      // 2. Handle assigned bikes
+      const bikesSnapshot = await getDocs(collection(db, "bikes"));
+      const assignedBikes = bikesSnapshot.docs.filter(
+        (doc) => doc.data().stationAssigned === stationId
+      );
+
+      // Update all bikes assigned to this station
+      const bikeUpdates = assignedBikes.map((bike) =>
+        updateDoc(doc(db, "bikes", bike.id), {
+          stationAssigned: null,
+          bikeStatus: "Available",
+          isAvailable: true,
+        })
+      );
+      await Promise.all(bikeUpdates);
+
+      // 3. Delete the station
       await deleteDoc(stationRef);
 
-      // Rest of your delete logic...
+      // Show success message
+      setSuccessMessage("Station deleted successfully!");
+      setShowSuccess(true);
+      setTimeout(() => setShowSuccess(false), 2000);
+
+      // Refresh data
+      fetchUnassignedAdmins();
+      fetchStations();
+      fetchBikes();
     } catch (error) {
       console.error("Error deleting station:", error);
+      alert("Error deleting station. Please try again.");
     }
   };
 

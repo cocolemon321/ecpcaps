@@ -6,6 +6,9 @@ import {
   getDocs,
   updateDoc,
   doc,
+  query,
+  onSnapshot,
+  orderBy,
 } from "firebase/firestore";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import Layout from "./Layout";
@@ -31,19 +34,53 @@ const BikeManagement = () => {
   const [sortBy, setSortBy] = useState("all"); // ✅ Default to "All Bikes"
   const [currentPage, setCurrentPage] = useState(1);
   const [bikesPerPage] = useState(10);
+  const [unassignedBikes, setUnassignedBikes] = useState([]);
+  const [selectedBikes, setSelectedBikes] = useState([]);
+  const [stations, setStations] = useState([]);
+  const [selectedStation, setSelectedStation] = useState("");
+  const [showAssignModal, setShowAssignModal] = useState(false);
+  const [unassignedFilter, setUnassignedFilter] = useState("all");
 
+  // Modify your useEffect to use a different ordering field temporarily
   useEffect(() => {
-    fetchBikes();
-  }, []);
+    const bikesRef = collection(db, "bikes");
+    // Use bikeId as temporary ordering until all documents have createdAt
+    const bikesQuery = query(bikesRef, orderBy("bikeId"));
 
-  const fetchBikes = async () => {
-    const querySnapshot = await getDocs(collection(db, "bikes"));
-    const bikeList = querySnapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
-    setBikes(bikeList);
-  };
+    const unsubscribe = onSnapshot(bikesQuery, (snapshot) => {
+      const bikeList = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      setBikes(bikeList);
+
+      const unassigned = bikeList.filter(
+        (bike) => !bike.stationAssigned && bike.bikeStatus === "Available"
+      );
+      setUnassignedBikes(unassigned);
+    });
+
+    // Fetch stations
+    const fetchStations = async () => {
+      const stationsRef = collection(db, "stations");
+      const unsubscribeStations = onSnapshot(stationsRef, (snapshot) => {
+        const stationsList = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        setStations(stationsList);
+      });
+
+      return unsubscribeStations;
+    };
+
+    const unsubscribeStations = fetchStations();
+
+    return () => {
+      unsubscribe();
+      unsubscribeStations.then((unsub) => unsub());
+    };
+  }, []);
 
   const handleFileChange = (e) => {
     setBikePhoto(e.target.files[0]);
@@ -133,6 +170,7 @@ const BikeManagement = () => {
     }
   };
 
+  // Update your handleAddSubmit function to include createdAt
   const handleAddSubmit = async (e) => {
     e.preventDefault();
     const imageUrl = await uploadImage();
@@ -148,15 +186,14 @@ const BikeManagement = () => {
       bikeCategory,
       bikeType,
       imageUrl,
-      bikeStatus: "Available", // Default status
-      isAvailable: true, // Default availability
-      createdAt: new Date(), // Add timestamp for tracking
+      bikeStatus: "Available",
+      isAvailable: true,
+      createdAt: new Date(),
     };
 
     try {
       await addDoc(collection(db, "bikes"), newBike);
       alert("Bike added successfully!");
-      setBikes([...bikes, newBike]);
       setShowAddModal(false);
       resetForm();
     } catch (error) {
@@ -301,9 +338,23 @@ const BikeManagement = () => {
     setCurrentPage(1);
   };
 
+  // First, create a filtered bikes array before pagination
+  const filteredBikes = bikes.filter(
+    (bike) =>
+      bike.bikeId.toUpperCase().includes(search) &&
+      (sortBy === "all" ||
+        (sortBy === "Regular Bicycle" &&
+          bike.bikeCategory === "Regular Bicycle") ||
+        (sortBy === "Electric Bicycle" &&
+          bike.bikeCategory === "Electric Bicycle") ||
+        bike.bikeStatus === sortBy)
+  );
+
+  // Update the pagination calculations to use filtered bikes
+  const totalPages = Math.ceil(filteredBikes.length / bikesPerPage);
   const indexOfLastBike = currentPage * bikesPerPage;
   const indexOfFirstBike = indexOfLastBike - bikesPerPage;
-  const totalPages = Math.ceil(bikes.length / bikesPerPage);
+  const paginatedBikes = filteredBikes.slice(indexOfFirstBike, indexOfLastBike);
 
   // Update the getBikeTotals function
   const getBikeTotals = () => {
@@ -321,6 +372,47 @@ const BikeManagement = () => {
         .length,
       retired: bikes.filter((bike) => bike.bikeStatus === "Retired").length,
     };
+  };
+
+  // Handle bike selection
+  const handleBikeSelection = (bikeId) => {
+    setSelectedBikes((prev) => {
+      if (prev.includes(bikeId)) {
+        return prev.filter((id) => id !== bikeId);
+      }
+      return [...prev, bikeId];
+    });
+  };
+
+  // Handle assign to station
+  const handleAssignToStation = async () => {
+    if (!selectedStation || selectedBikes.length === 0) {
+      alert("Please select a station and at least one bike");
+      return;
+    }
+
+    try {
+      const updates = selectedBikes.map((bikeId) =>
+        updateDoc(doc(db, "bikes", bikeId), {
+          stationAssigned: selectedStation,
+        })
+      );
+
+      await Promise.all(updates);
+      setSelectedBikes([]);
+      setSelectedStation("");
+      setShowAssignModal(false);
+    } catch (error) {
+      console.error("Error assigning bikes:", error);
+      alert("Failed to assign bikes to station");
+    }
+  };
+
+  const getFilteredUnassignedBikes = () => {
+    return unassignedBikes.filter((bike) => {
+      if (unassignedFilter === "all") return true;
+      return bike.bikeCategory === unassignedFilter;
+    });
   };
 
   return (
@@ -345,6 +437,7 @@ const BikeManagement = () => {
           >
             <FaPlus /> Add Bike
           </button>
+
           <button className="generate-pdf-btn" onClick={generatePDF}>
             Generate QR (PDF)
           </button>
@@ -483,7 +576,7 @@ const BikeManagement = () => {
           </div>
         </div>
 
-        {/* Bike List Table */}
+        {/* Bike List Table with integrated pagination */}
         <div className="bike-list">
           <table>
             <thead>
@@ -498,19 +591,14 @@ const BikeManagement = () => {
               </tr>
             </thead>
             <tbody>
-              {bikes
-                .filter(
-                  (bike) =>
-                    bike.bikeId.toUpperCase().includes(search) &&
-                    (sortBy === "all" ||
-                      (sortBy === "Regular Bicycle" &&
-                        bike.bikeCategory === "Regular Bicycle") ||
-                      (sortBy === "Electric Bicycle" &&
-                        bike.bikeCategory === "Electric Bicycle") ||
-                      bike.bikeStatus === sortBy) // Add this line for status filtering
-                )
-                .slice(indexOfFirstBike, indexOfLastBike)
-                .map((bike) => (
+              {filteredBikes.length === 0 ? (
+                <tr>
+                  <td colSpan="7" className="no-results">
+                    No bikes found matching your criteria
+                  </td>
+                </tr>
+              ) : (
+                paginatedBikes.map((bike) => (
                   <tr
                     key={bike.id}
                     onClick={() => {
@@ -556,9 +644,33 @@ const BikeManagement = () => {
                       </button>
                     </td>
                   </tr>
-                ))}
+                ))
+              )}
             </tbody>
           </table>
+
+          {/* Only show pagination if there are bikes */}
+          {filteredBikes.length > 0 && (
+            <div className="pagination-controls">
+              <button
+                className="pagination-button"
+                onClick={() => setCurrentPage(currentPage - 1)}
+                disabled={currentPage === 1}
+              >
+                Previous
+              </button>
+              <span className="pagination-info">
+                Page {currentPage} of {totalPages}
+              </span>
+              <button
+                className="pagination-button"
+                onClick={() => setCurrentPage(currentPage + 1)}
+                disabled={currentPage === totalPages}
+              >
+                Next
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Bike Details Modal */}
@@ -692,25 +804,115 @@ const BikeManagement = () => {
             </div>
           </div>
         )}
-      </div>
-      <div className="pagination-controls">
-        <button
-          className="pagination-button"
-          onClick={() => setCurrentPage(currentPage - 1)}
-          disabled={currentPage === 1}
-        >
-          Previous
-        </button>
-        <span className="pagination-info">
-          Page {currentPage} of {totalPages}
-        </span>
-        <button
-          className="pagination-button"
-          onClick={() => setCurrentPage(currentPage + 1)}
-          disabled={currentPage === totalPages}
-        >
-          Next
-        </button>
+
+        {/* Add this before the unassigned-bikes-section */}
+        <div className="unassigned-inventory-card">
+          <div className="inventory-stats">
+            <div className="inventory-total">
+              <h3>Unassigned Bikes Inventory</h3>
+              <div className="total-count">{unassignedBikes.length}</div>
+            </div>
+            <div className="inventory-breakdown">
+              <div className="inventory-item">
+                <span>Regular Bikes:</span>
+                <span>
+                  {
+                    unassignedBikes.filter(
+                      (bike) => bike.bikeCategory === "Regular Bicycle"
+                    ).length
+                  }
+                </span>
+              </div>
+              <div className="inventory-item">
+                <span>Electric Bikes:</span>
+                <span>
+                  {
+                    unassignedBikes.filter(
+                      (bike) => bike.bikeCategory === "Electric Bicycle"
+                    ).length
+                  }
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Add Unassigned Bikes Section */}
+        <div className="unassigned-bikes-section">
+          <div className="unassigned-header">
+            <h2>Unassigned Bikes</h2>
+            <div className="unassigned-filters">
+              <select
+                value={unassignedFilter}
+                onChange={(e) => setUnassignedFilter(e.target.value)}
+                className="filter-dropdown"
+              >
+                <option value="all">All Categories</option>
+                <option value="Regular Bicycle">Regular Bikes</option>
+                <option value="Electric Bicycle">Electric Bikes</option>
+              </select>
+              <button
+                className="assign-button"
+                disabled={selectedBikes.length === 0}
+                onClick={() => setShowAssignModal(true)}
+              >
+                Assign Selected Bikes ({selectedBikes.length})
+              </button>
+            </div>
+          </div>
+          <div className="unassigned-bikes-grid">
+            {getFilteredUnassignedBikes().map((bike) => (
+              <div
+                key={bike.id}
+                className={`bike-card ${
+                  selectedBikes.includes(bike.id) ? "selected" : ""
+                }`}
+                onClick={() => handleBikeSelection(bike.id)}
+              >
+                <img src={bike.imageUrl} alt={bike.bikeName} />
+                <div className="bike-info">
+                  <h3>{bike.bikeName}</h3>
+                  <p>ID: {bike.bikeId}</p>
+                  <p>Category: {bike.bikeCategory}</p>
+                  <p>Type: {bike.bikeType}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Assign to Station Modal */}
+        {showAssignModal && (
+          <div className="modal-overlay">
+            <div className="modal-content">
+              <h2>Assign Bikes to Station</h2>
+              <p>Selected Bikes: {selectedBikes.length}</p>
+              <select
+                value={selectedStation}
+                onChange={(e) => setSelectedStation(e.target.value)}
+                required
+              >
+                <option value="">Select Station</option>
+                {stations.map((station) => (
+                  <option key={station.id} value={station.id}>
+                    {station.stationName}
+                  </option>
+                ))}
+              </select>
+              <div className="modal-buttons">
+                <button className="save-btn" onClick={handleAssignToStation}>
+                  Assign
+                </button>
+                <button
+                  className="cancel-btn"
+                  onClick={() => setShowAssignModal(false)}
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </Layout>
   );
