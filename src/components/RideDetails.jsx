@@ -4,7 +4,7 @@ import { db } from "../firebase";
 import Layout from "./Layout";
 import dayjs from "dayjs";
 import "../styles/RideDetails.css";
-import ContentHeader from "./ContentHeader"; // Add this import
+import ContentHeader from "./ContentHeader";
 
 const RideDetails = () => {
   const [rides, setRides] = useState([]);
@@ -173,17 +173,178 @@ const RideDetails = () => {
 
   const totalPages = Math.ceil(sortedAndFilteredRides.length / rowsPerPage);
 
-  // Add this before the return statement
-  const tableTotals = sortedAndFilteredRides.reduce(
+  // Calculate summary stats from filtered rides (matches table)
+  const filteredTotals = sortedAndFilteredRides.reduce(
     (acc, ride) => ({
-      duration: acc.duration + (ride.duration || 0),
-      distance: acc.distance + (ride.distance || 0),
-      calories: acc.calories + (ride.caloriesBurned || 0),
-      carbon: acc.carbon + (ride.carbonSaved || 0),
-      amount: acc.amount + (ride.amountPaid || 0),
+      totalRides: acc.totalRides + 1,
+      totalRevenue: acc.totalRevenue + (ride.amountPaid || 0),
+      totalDistance: acc.totalDistance + (ride.distance || 0),
+      totalDuration: acc.totalDuration + (ride.duration || 0),
+      totalCalories: acc.totalCalories + (ride.caloriesBurned || 0),
+      totalCarbonSaved: acc.totalCarbonSaved + (ride.carbonSaved || 0),
     }),
-    { duration: 0, distance: 0, calories: 0, carbon: 0, amount: 0 }
+    {
+      totalRides: 0,
+      totalRevenue: 0,
+      totalDistance: 0,
+      totalDuration: 0,
+      totalCalories: 0,
+      totalCarbonSaved: 0,
+    }
   );
+
+  const stationLabel =
+    stationFilter === "all"
+      ? { text: "All Stations", bold: true, margin: [0, 0, 0, 8] }
+      : {
+          text: `Station: ${stations[stationFilter] || "Unknown"}`,
+          bold: true,
+          margin: [0, 0, 0, 8],
+        };
+
+  // Load logo as base64 (pdfmake only supports base64 images)
+  const getLogoBase64 = () =>
+    new Promise((resolve) => {
+      const img = new window.Image();
+      img.crossOrigin = "Anonymous";
+      img.onload = function () {
+        const canvas = document.createElement("canvas");
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0);
+        resolve(canvas.toDataURL("image/png"));
+      };
+      img.src = "/assets/ecoridelogo.png";
+    });
+
+  const generatePdf = async () => {
+    const logoBase64 = await getLogoBase64();
+    const pdfMake = (await import("pdfmake/build/pdfmake")).default;
+    const pdfFonts = (await import("pdfmake/build/vfs_fonts")).default;
+    pdfMake.vfs = pdfFonts.vfs;
+
+    const filterLabel =
+      timeFilter === "all"
+        ? "All Time"
+        : timeFilter === "today"
+        ? "Today"
+        : timeFilter === "week"
+        ? "This Week"
+        : "This Month";
+
+    const docDefinition = {
+      pageMargins: [40, 40, 40, 40],
+      content: [
+        {
+          columns: [
+            [
+              { text: "EcoRide Parada", style: "header" },
+              { text: "Ride Activity and Revenue Report", style: "subheader" },
+              stationLabel,
+            ],
+            [
+              {
+                image: logoBase64,
+                width: 80,
+                alignment: "right",
+                margin: [0, 0, 0, 0],
+              },
+            ],
+          ],
+        },
+        {
+          text: [
+            `This report summarizes ride activity and revenue for ${filterLabel} at EcoRide Parada.\n`,
+            "Total rides: ",
+            { text: filteredTotals.totalRides.toString(), bold: true },
+            "\n",
+            "Total revenue: ₱",
+            { text: filteredTotals.totalRevenue.toFixed(2), bold: true },
+            "\n",
+            "Total distance: ",
+            { text: filteredTotals.totalDistance.toFixed(2), bold: true },
+            " km\n",
+            "Total duration: ",
+            {
+              text: Math.round(filteredTotals.totalDuration / 60).toString(),
+              bold: true,
+            },
+            " min\n",
+            "Calories burned: ",
+            {
+              text: Math.round(filteredTotals.totalCalories).toString(),
+              bold: true,
+            },
+            "\n",
+            "CO₂ saved: ",
+            { text: filteredTotals.totalCarbonSaved.toFixed(2), bold: true },
+            " kg\n",
+          ],
+          style: "summary",
+        },
+        { text: "Rides", style: "tableHeader", margin: [0, 10, 0, 4] },
+        {
+          table: {
+            headerRows: 1,
+            widths: [
+              "auto",
+              "*",
+              "*",
+              "auto",
+              "auto",
+              "auto",
+              "auto",
+              "auto",
+              "*",
+              "*",
+            ],
+            body: [
+              [
+                { text: "Date", bold: true },
+                { text: "User", bold: true },
+                { text: "Bike", bold: true },
+                { text: "Revenue", bold: true },
+                { text: "Duration (min)", bold: true },
+                { text: "Distance (km)", bold: true },
+                { text: "Calories", bold: true },
+                { text: "CO₂ Saved (kg)", bold: true },
+                { text: "Start Station", bold: true },
+                { text: "End Station", bold: true },
+              ],
+              ...sortedAndFilteredRides.map((ride) => [
+                dayjs(ride.rideEndedAt).format("YYYY-MM-DD HH:mm"),
+                users[ride.userId] || "Unknown",
+                bikes[ride.bikeId]?.bikeName || "Unknown",
+                ride.amountPaid?.toFixed(2) || 0,
+                Math.round(ride.duration / 60) || 0,
+                ride.distance?.toFixed(2) || 0,
+                Math.round(ride.caloriesBurned) || 0,
+                ride.carbonSaved?.toFixed(2) || 0,
+                stations[ride.startStation] || "Unknown",
+                stations[ride.endStation] || "Unknown",
+              ]),
+            ],
+          },
+          fontSize: 9,
+          layout: "lightHorizontalLines",
+        },
+        {
+          text: `Report generated on: ${dayjs().format("YYYY-MM-DD HH:mm")}`,
+          style: "footer",
+          margin: [0, 20, 0, 0],
+        },
+      ],
+      styles: {
+        header: { fontSize: 18, bold: true, alignment: "left" },
+        subheader: { fontSize: 13, bold: true, margin: [0, 4, 0, 8] },
+        summary: { fontSize: 10, margin: [0, 0, 0, 8] },
+        tableHeader: { fontSize: 11, bold: true },
+        footer: { fontSize: 8, color: "gray" },
+      },
+    };
+    pdfMake.createPdf(docDefinition).download("ecoride_parada_ride_report.pdf");
+  };
 
   return (
     <Layout>
@@ -217,19 +378,24 @@ const RideDetails = () => {
               This Month
             </button>
           </div>
-          <div className="station-filter">
-            <select
-              value={stationFilter}
-              onChange={(e) => setStationFilter(e.target.value)}
-              className="filter-select"
-            >
-              <option value="all">All End Stations</option>
-              {Object.entries(stations).map(([id, name]) => (
-                <option key={id} value={id}>
-                  {name}
-                </option>
-              ))}
-            </select>
+          <div className="controls-right">
+            <div className="station-filter">
+              <select
+                value={stationFilter}
+                onChange={(e) => setStationFilter(e.target.value)}
+                className="filter-select"
+              >
+                <option value="all">All End Stations</option>
+                {Object.entries(stations).map(([id, name]) => (
+                  <option key={id} value={id}>
+                    {name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <button className="generate-report-btn" onClick={generatePdf}>
+              Generate PDF
+            </button>
           </div>
         </div>
         {/* Update the stats grid in the JSX */}

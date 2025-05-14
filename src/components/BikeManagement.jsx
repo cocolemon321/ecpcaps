@@ -14,7 +14,7 @@ import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import Layout from "./Layout";
 import ContentHeader from "./ContentHeader"; // Import the ContentHeader component
 import "../styles/BikeManagement.css";
-import { FaPlus, FaEdit, FaUpload } from "react-icons/fa";
+import { FaPlus, FaEdit, FaUpload, FaTimes } from "react-icons/fa";
 import QRCode from "qrcode"; // Import qrcode library for generating QR codes
 import { jsPDF } from "jspdf"; // Import jsPDF for creating PDF files
 
@@ -40,6 +40,13 @@ const BikeManagement = () => {
   const [selectedStation, setSelectedStation] = useState("");
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [unassignedFilter, setUnassignedFilter] = useState("all");
+  const [showBulkAddModal, setShowBulkAddModal] = useState(false); // New state for bulk add modal
+  const [bulkQuantity, setBulkQuantity] = useState(1); // New state for bulk quantity
+  const [bulkBikeType, setBulkBikeType] = useState(""); // New state for bulk bike type
+  const [bulkBikeCategory, setBulkBikeCategory] = useState(""); // New state for bulk bike category
+  const [bulkBikeName, setBulkBikeName] = useState(""); // New state for bulk bike name
+  const [bulkBikes, setBulkBikes] = useState([]); // New state for preview bikes
+  const [bulkPhotos, setBulkPhotos] = useState({}); // New state for storing photos
 
   // Modify your useEffect to use a different ordering field temporarily
   useEffect(() => {
@@ -415,6 +422,100 @@ const BikeManagement = () => {
     });
   };
 
+  // Add new function to handle individual photo upload
+  const handleBulkPhotoUpload = async (bikeId, file) => {
+    try {
+      const compressedBlob = await compressImage(file);
+      const filename = `bikes/${Date.now()}_${file.name}`;
+      const storage = getStorage();
+      const storageRef = ref(storage, filename);
+      await uploadBytes(storageRef, compressedBlob);
+      const downloadURL = await getDownloadURL(storageRef);
+
+      setBulkPhotos((prev) => ({
+        ...prev,
+        [bikeId]: downloadURL,
+      }));
+    } catch (error) {
+      console.error("Error uploading photo:", error);
+      alert("Failed to upload photo");
+    }
+  };
+
+  // Modify handleBulkAddSubmit to include photos
+  const handleBulkAddSubmit = async (e) => {
+    e.preventDefault();
+
+    try {
+      const newBikes = bulkBikes.map((bike) => ({
+        ...bike,
+        imageUrl: bulkPhotos[bike.bikeId] || null,
+      }));
+
+      // Add all bikes to Firestore
+      const addPromises = newBikes.map((bike) =>
+        addDoc(collection(db, "bikes"), bike)
+      );
+      await Promise.all(addPromises);
+
+      alert(`${bulkQuantity} bikes added successfully!`);
+      setShowBulkAddModal(false);
+      resetBulkForm();
+    } catch (error) {
+      console.error("Error adding bikes in bulk:", error);
+      alert("Failed to add bikes in bulk");
+    }
+  };
+
+  // Add function to generate preview bikes
+  const generateBulkBikes = () => {
+    const regularBikeCount = bikes.filter(
+      (bike) => bike.bikeCategory === "Regular Bicycle"
+    ).length;
+    const electricBikeCount = bikes.filter(
+      (bike) => bike.bikeCategory === "Electric Bicycle"
+    ).length;
+
+    const newBikes = [];
+    for (let i = 0; i < bulkQuantity; i++) {
+      const prefix = bulkBikeCategory === "Regular Bicycle" ? "BK" : "EBK";
+      const count =
+        bulkBikeCategory === "Regular Bicycle"
+          ? regularBikeCount + i + 1
+          : electricBikeCount + i + 1;
+      const bikeId = `${prefix}-${String(count).padStart(3, "0")}`;
+
+      newBikes.push({
+        bikeId,
+        bikeName: `${bulkBikeName} ${String(count).padStart(3, "0")}`,
+        bikeCategory: bulkBikeCategory,
+        bikeType: bulkBikeType,
+        bikeStatus: "Available",
+        isAvailable: true,
+        createdAt: new Date(),
+      });
+    }
+
+    setBulkBikes(newBikes);
+  };
+
+  // Add effect to generate preview bikes when form changes
+  useEffect(() => {
+    if (bulkQuantity > 0 && bulkBikeCategory && bulkBikeType && bulkBikeName) {
+      generateBulkBikes();
+    }
+  }, [bulkQuantity, bulkBikeCategory, bulkBikeType, bulkBikeName]);
+
+  // Modify resetBulkForm to clear photos
+  const resetBulkForm = () => {
+    setBulkQuantity(1);
+    setBulkBikeType("");
+    setBulkBikeCategory("");
+    setBulkBikeName("");
+    setBulkBikes([]);
+    setBulkPhotos({});
+  };
+
   return (
     <Layout>
       <ContentHeader title="Bike Management" />
@@ -431,12 +532,14 @@ const BikeManagement = () => {
             value={search}
             onChange={handleSearch}
           />
-          <button
-            className="add-bike-btn"
-            onClick={() => setShowAddModal(true)}
-          >
-            <FaPlus /> Add Bike
-          </button>
+          <div className="button-group">
+            <button
+              className="bulk-add-btn"
+              onClick={() => setShowBulkAddModal(true)}
+            >
+              <FaPlus /> Add Bikes
+            </button>
+          </div>
 
           <button className="generate-pdf-btn" onClick={generatePDF}>
             Generate QR (PDF)
@@ -910,6 +1013,128 @@ const BikeManagement = () => {
                   Cancel
                 </button>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* Update Bulk Add Modal */}
+        {showBulkAddModal && (
+          <div className="modal-overlay">
+            <div className="modal-content bulk-add-modal">
+              <div className="modal-header">
+                <h2>Add Bikes</h2>
+                <button
+                  className="close-modal-btn"
+                  onClick={() => {
+                    setShowBulkAddModal(false);
+                    resetBulkForm();
+                  }}
+                >
+                  <FaTimes />
+                </button>
+              </div>
+              <form className="bike-form" onSubmit={handleBulkAddSubmit}>
+                <div className="bulk-form-fields">
+                  <label>Base Bike Name:</label>
+                  <input
+                    type="text"
+                    value={bulkBikeName}
+                    onChange={(e) => setBulkBikeName(e.target.value)}
+                    placeholder="e.g., EcoRide Bike"
+                    required
+                  />
+
+                  <label>Category of Bike:</label>
+                  <select
+                    value={bulkBikeCategory}
+                    onChange={(e) => setBulkBikeCategory(e.target.value)}
+                    required
+                  >
+                    <option value="">Select Category</option>
+                    <option value="Regular Bicycle">Regular Bicycle</option>
+                    <option value="Electric Bicycle">Electric Bicycle</option>
+                  </select>
+
+                  <label>Bike Type:</label>
+                  <select
+                    value={bulkBikeType}
+                    onChange={(e) => setBulkBikeType(e.target.value)}
+                    required
+                  >
+                    <option value="">Select Bike Type</option>
+                    <option value="Road Bike">Road Bike</option>
+                    <option value="Mountain Bike">Mountain Bike</option>
+                    <option value="City Bike">City Bike</option>
+                    <option value="Fat Bike">Fat Bike</option>
+                    <option value="BMX">BMX</option>
+                    <option value="Electric Bike">Electric Bike</option>
+                  </select>
+
+                  <label>Quantity:</label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="100"
+                    value={bulkQuantity}
+                    onChange={(e) => setBulkQuantity(parseInt(e.target.value))}
+                    required
+                  />
+                </div>
+
+                {/* Preview Grid */}
+                <div className="bulk-preview-grid">
+                  {bulkBikes.map((bike) => (
+                    <div key={bike.bikeId} className="bulk-preview-item">
+                      <div className="preview-image-container">
+                        {bulkPhotos[bike.bikeId] ? (
+                          <img
+                            src={bulkPhotos[bike.bikeId]}
+                            alt={bike.bikeName}
+                          />
+                        ) : (
+                          <div className="upload-placeholder">
+                            <label className="upload-label">
+                              <FaPlus />
+                              <input
+                                type="file"
+                                accept="image/*"
+                                onChange={(e) =>
+                                  handleBulkPhotoUpload(
+                                    bike.bikeId,
+                                    e.target.files[0]
+                                  )
+                                }
+                              />
+                            </label>
+                          </div>
+                        )}
+                      </div>
+                      <div className="preview-info">
+                        <h4>{bike.bikeName}</h4>
+                        <p>{bike.bikeId}</p>
+                        <p>{bike.bikeCategory}</p>
+                        <p>{bike.bikeType}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="modal-buttons">
+                  <button type="submit" className="save-btn">
+                    Create {bulkQuantity} Bikes
+                  </button>
+                  <button
+                    type="button"
+                    className="cancel-btn"
+                    onClick={() => {
+                      setShowBulkAddModal(false);
+                      resetBulkForm();
+                    }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
         )}

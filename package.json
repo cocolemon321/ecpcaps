@@ -25,6 +25,7 @@
     "firebase-admin": "^13.2.0",
     "jspdf": "^3.0.1",
     "mapbox-gl": "^3.11.0",
+    "pdfmake": "^0.2.20",
     "qrcode": "^1.5.4",
     "qrcode.react": "^4.2.0",
     "react": "^19.0.0",

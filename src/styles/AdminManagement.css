@@ -604,7 +604,6 @@
 .button-group {
   display: flex;
   gap: 1rem;
-  margin-top: 1rem;
 }
 
 /* Responsive Design */
@@ -645,5 +644,38 @@
         padding: 8px 12px;
         font-size: 12px;
     }
+}
+
+.controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+  gap: 1rem;
+}
+
+.controls-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-left: auto;
+}
+
+.controls-right select,
+.controls-right button {
+  margin-left: 0.5rem;
+}
+
+@media (max-width: 768px) {
+  .controls {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+  }
+  .controls-right {
+    width: 100%;
+    justify-content: flex-end;
+    margin-left: 0;
+  }
 }
 
