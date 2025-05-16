@@ -17,6 +17,7 @@ import "../styles/BikeManagement.css";
 import { FaPlus, FaEdit, FaUpload, FaTimes } from "react-icons/fa";
 import QRCode from "qrcode"; // Import qrcode library for generating QR codes
 import { jsPDF } from "jspdf"; // Import jsPDF for creating PDF files
+import { logAdminAction } from "../utils/logAdminAction";
 
 const BikeManagement = () => {
   const [bikeStatus, setBikeStatus] = useState("available");
@@ -203,6 +204,12 @@ const BikeManagement = () => {
       alert("Bike added successfully!");
       setShowAddModal(false);
       resetForm();
+      await logAdminAction({
+        actionType: "ADD_BIKE",
+        details: `Added bike: ${bikeId}`,
+        targetCollection: "bikes",
+        targetId: bikeId,
+      });
     } catch (error) {
       console.error("Error adding bike:", error);
     }
@@ -225,8 +232,13 @@ const BikeManagement = () => {
       alert("Bike updated successfully!");
       setEditingBike(null);
       setShowEditModal(false);
-      fetchBikes();
       resetForm();
+      await logAdminAction({
+        actionType: "UPDATE_BIKE",
+        details: `Updated bike: ${editingBike.bikeId}`,
+        targetCollection: "bikes",
+        targetId: editingBike.bikeId,
+      });
     } catch (error) {
       console.error("Error updating bike:", error);
     }
@@ -246,10 +258,18 @@ const BikeManagement = () => {
 
   const handleStatusChange = async (bikeId, newStatus) => {
     try {
+      // Find the bike to get the previous status
+      const bike = bikes.find((b) => b.id === bikeId);
+      const prevStatus = bike ? bike.bikeStatus : "Unknown";
       const updatedBike = { bikeStatus: newStatus };
       await updateDoc(doc(db, "bikes", bikeId), updatedBike);
       alert("Bike status updated!");
-      fetchBikes();
+      await logAdminAction({
+        actionType: "CHANGE_BIKE_STATUS",
+        details: `Bike ${bike.bikeId} status changed from "${prevStatus}" to "${newStatus}"`,
+        targetCollection: "bikes",
+        targetId: bikeId,
+      });
     } catch (error) {
       console.error("Error updating bike status:", error);
       alert("Failed to update bike status");
@@ -461,6 +481,12 @@ const BikeManagement = () => {
       alert(`${bulkQuantity} bikes added successfully!`);
       setShowBulkAddModal(false);
       resetBulkForm();
+      await logAdminAction({
+        actionType: "ADD_BIKE",
+        details: `Added ${bulkQuantity} bikes`,
+        targetCollection: "bikes",
+        targetId: "bulk",
+      });
     } catch (error) {
       console.error("Error adding bikes in bulk:", error);
       alert("Failed to add bikes in bulk");

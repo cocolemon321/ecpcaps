@@ -76,7 +76,7 @@
 
 /* Column widths */
 .user-list th:nth-child(1),
-.user-list td:nth-child(1) { width: 10%; } /* Profile Photo */
+.user-list td:nth-child(1) { width: 90px !important; } /* Status column */
 .user-list th:nth-child(2),
 .user-list td:nth-child(2) { width: 20%; } /* Name */
 .user-list th:nth-child(3),
@@ -460,6 +460,8 @@
   display: flex;
   align-items: center;
   gap: 4px;
+  justify-content: flex-start;
+  min-width: 70px;
 }
 
 .warning-text {
@@ -509,20 +511,27 @@
 /* Flagged Users Section */
 .banned-badge,
 .flagged-badge {
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 12px;
-  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: 5px;
+  font-size: 13px;
+  font-weight: 600;
+  border: 1px solid #e0e0e0;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.03);
 }
 
 .banned-badge {
   background-color: #dc3545;
-  color: white;
+  color: #fff;
+  border-color: #b02a37;
 }
 
 .flagged-badge {
-  background-color: #ffc107;
-  color: #000;
+  background-color: #ffe082;
+  color: #b26a00;
+  border-color: #ffd54f;
 }
 
 .ban-btn,
@@ -658,7 +667,11 @@
 /* Set specific widths for each column */
 .user-list th:nth-child(1), 
 .user-list td:nth-child(1) {
-  width: 60px; /* Status column */
+  width: 90px !important;
+  min-width: 80px;
+  max-width: 120px;
+  text-align: left;
+  vertical-align: middle;
 }
 
 .user-list th:nth-child(2), 

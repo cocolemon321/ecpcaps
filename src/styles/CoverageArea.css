@@ -170,4 +170,35 @@
 
 .mapboxgl-ctrl-group button:last-child {
   border-bottom: none;
+}
+
+.coverage-controls {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  align-items: center;
+}
+
+.coverage-select {
+  flex: 1;
+}
+
+.coverage-select-dropdown {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 1rem;
+}
+
+.coverage-name-input {
+  flex: 1;
+}
+
+.coverage-name-field {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 1rem;
 } 

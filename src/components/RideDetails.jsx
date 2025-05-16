@@ -202,24 +202,7 @@ const RideDetails = () => {
           margin: [0, 0, 0, 8],
         };
 
-  // Load logo as base64 (pdfmake only supports base64 images)
-  const getLogoBase64 = () =>
-    new Promise((resolve) => {
-      const img = new window.Image();
-      img.crossOrigin = "Anonymous";
-      img.onload = function () {
-        const canvas = document.createElement("canvas");
-        canvas.width = img.width;
-        canvas.height = img.height;
-        const ctx = canvas.getContext("2d");
-        ctx.drawImage(img, 0, 0);
-        resolve(canvas.toDataURL("image/png"));
-      };
-      img.src = "/assets/ecoridelogo.png";
-    });
-
   const generatePdf = async () => {
-    const logoBase64 = await getLogoBase64();
     const pdfMake = (await import("pdfmake/build/pdfmake")).default;
     const pdfFonts = (await import("pdfmake/build/vfs_fonts")).default;
     pdfMake.vfs = pdfFonts.vfs;
@@ -242,14 +225,6 @@ const RideDetails = () => {
               { text: "EcoRide Parada", style: "header" },
               { text: "Ride Activity and Revenue Report", style: "subheader" },
               stationLabel,
-            ],
-            [
-              {
-                image: logoBase64,
-                width: 80,
-                alignment: "right",
-                margin: [0, 0, 0, 0],
-              },
             ],
           ],
         },
@@ -402,56 +377,33 @@ const RideDetails = () => {
         <div className="stats-grid">
           <div className="stat-card">
             <h3>Total Rides</h3>
-            <p>{stats.totalRides}</p>
+            <p>{filteredTotals.totalRides}</p>
           </div>
           <div className="stat-card">
             <h3>Total Revenue</h3>
-            <p>₱{stats.totalRevenue.toFixed(2)}</p>
+            <p>₱{filteredTotals.totalRevenue.toFixed(2)}</p>
           </div>
           <div className="stat-card">
             <h3>Total Distance</h3>
-            <p>{stats.totalDistance.toFixed(2)} km</p>
+            <p>{filteredTotals.totalDistance.toFixed(2)} km</p>
           </div>
           <div className="stat-card">
             <h3>Total Duration</h3>
-            <p>{Math.round(stats.totalDuration / 60)} min</p>
+            <p>{Math.round(filteredTotals.totalDuration / 60)} min</p>
           </div>
           <div className="stat-card">
             <h3>Calories Burned</h3>
-            <p>{Math.round(stats.totalCalories)} cal</p>
+            <p>{Math.round(filteredTotals.totalCalories)} cal</p>
           </div>
           <div className="stat-card">
             <h3>CO2 Saved</h3>
-            <p>{stats.totalCarbonSaved.toFixed(2)} kg</p>
+            <p>{filteredTotals.totalCarbonSaved.toFixed(2)} kg</p>
           </div>
         </div>
         {loading ? (
           <div className="loading">Loading...</div>
         ) : (
           <>
-            <div className="station-totals">
-              {stationFilter !== "all" && (
-                <div className="selected-station-stats">
-                  <h3>Statistics for {stations[stationFilter]}</h3>
-                  <div className="stats-row">
-                    <span>Total Rides: {sortedAndFilteredRides.length}</span>
-                    <span>
-                      Total Revenue: ₱
-                      {sortedAndFilteredRides
-                        .reduce((sum, ride) => sum + (ride.amountPaid || 0), 0)
-                        .toFixed(2)}
-                    </span>
-                    <span>
-                      Total Distance:{" "}
-                      {sortedAndFilteredRides
-                        .reduce((sum, ride) => sum + (ride.distance || 0), 0)
-                        .toFixed(2)}{" "}
-                      km
-                    </span>
-                  </div>
-                </div>
-              )}
-            </div>
             <div className="table-container">
               <table>
                 <thead>

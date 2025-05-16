@@ -11,12 +11,14 @@ import {
   getDoc,
   query,
   where,
+  writeBatch,
 } from "firebase/firestore";
 import Layout from "./Layout";
 import ContentHeader from "./ContentHeader";
 import "../styles/UserManagement.css";
 import { FaCheck, FaTimes, FaClock } from "react-icons/fa";
 import dayjs from "dayjs";
+import { logAdminAction } from "../utils/logAdminAction";
 
 // Add this helper function at the top level
 const isValidAddress = (address) => {
@@ -24,6 +26,10 @@ const isValidAddress = (address) => {
     item["Raw Address"].toLowerCase().includes(address.toLowerCase())
   );
 };
+
+// Helper to check if a user is flagged
+const isUserFlagged = (user, flaggedUsers) =>
+  flaggedUsers.some((f) => f.uid === user.uid && !f.isBanned);
 
 const UserManagement = () => {
   const [registeredUsers, setRegisteredUsers] = useState([]);
@@ -43,6 +49,8 @@ const UserManagement = () => {
   const [flaggedUsersSearch, setFlaggedUsersSearch] = useState("");
   const [selectedReports, setSelectedReports] = useState(null);
   const itemsPerPage = 5; // Users per page
+  const [flaggedHistory, setFlaggedHistory] = useState([]);
+  const [showFlaggedHistory, setShowFlaggedHistory] = useState(false);
 
   useEffect(() => {
     fetchRegisteredUsers();
@@ -193,6 +201,13 @@ const UserManagement = () => {
 
         // Delete from pending
         await deleteDoc(userRef);
+
+        await logAdminAction({
+          actionType: "APPROVE_USER",
+          details: `Approved user with ID: ${userId}`,
+          targetCollection: "users",
+          targetId: userId,
+        });
       } else if (action === "reject") {
         // Update status to rejected
         await updateDoc(userRef, {
@@ -232,6 +247,13 @@ const UserManagement = () => {
       // Refresh user lists
       fetchFlaggedUsers();
       fetchRegisteredUsers();
+
+      await logAdminAction({
+        actionType: "BAN_USER",
+        details: `Banned user with ID: ${userId}`,
+        targetCollection: "users",
+        targetId: userId,
+      });
     } catch (error) {
       console.error("Error updating user ban status:", error);
     }
@@ -240,7 +262,7 @@ const UserManagement = () => {
   const handleViewReports = (user) => {
     setSelectedReports({
       userName: `${user.first_name} ${user.middle_name} ${user.surname}`,
-      reports: user.reports.map((report) => {
+      reports: user.reports.map((report, index) => {
         // Check if timestamp is already a Date object
         const timestamp =
           report.timestamp instanceof Date
@@ -303,12 +325,37 @@ const UserManagement = () => {
   }, [registeredUsers, pendingUsers]);
 
   // Update the StatusIndicator component
-  const StatusIndicator = ({ status, addressValidated, isPending }) => {
+  const StatusIndicator = ({
+    status,
+    addressValidated,
+    isPending,
+    isBanned,
+    isFlagged,
+    user,
+    onUnflag,
+  }) => {
+    if (isBanned) {
+      return (
+        <div className="status-container">
+          <span className="banned-badge" title="Banned">
+            ⛔ Banned
+          </span>
+        </div>
+      );
+    }
+    if (isFlagged) {
+      return (
+        <div className="status-container">
+          <span className="flagged-badge" title="Flagged">
+            🚩 Flagged
+          </span>
+        </div>
+      );
+    }
     if (status === "approved") {
       return (
         <div className="status-container">
           <FaCheck className="status-icon approved" title="Approved" />
-          {/* Only show warning if isPending is true */}
           {isPending && !addressValidated && (
             <span
               className="warning-text"
@@ -331,6 +378,50 @@ const UserManagement = () => {
 
   const closeImageModal = () => {
     setSelectedImage(null);
+  };
+
+  // Unflag user function (move inside component)
+  const handleUnflagUser = async (userId) => {
+    if (!window.confirm("Are you sure you want to unflag this user?")) return;
+    try {
+      const reportsSnapshot = await getDocs(
+        query(collection(db, "user_reports"), where("userId", "==", userId))
+      );
+      const batch = writeBatch(db);
+      reportsSnapshot.docs.forEach((docSnap) => {
+        batch.delete(doc(db, "user_reports", docSnap.id));
+      });
+      await batch.commit();
+      // Update user status to 'approved' in approved_users
+      const userRef = doc(db, "approved_users", userId);
+      await updateDoc(userRef, { status: "approved" });
+      // Add to flagged history (for demo, not persistent)
+      const user = flaggedUsers.find((u) => u.uid === userId);
+      if (user) {
+        setFlaggedHistory((prev) => [
+          {
+            uid: user.uid,
+            name: `${user.first_name} ${user.middle_name} ${user.surname}`,
+            email: user.email,
+            unflaggedAt: new Date(),
+          },
+          ...prev,
+        ]);
+      }
+      fetchFlaggedUsers();
+      fetchRegisteredUsers();
+      alert("User has been unflagged and is now approved.");
+
+      await logAdminAction({
+        actionType: "UNFLAG_USER",
+        details: `Unflagged user with ID: ${userId}`,
+        targetCollection: "users",
+        targetId: userId,
+      });
+    } catch (error) {
+      alert("Failed to unflag user.");
+      console.error(error);
+    }
   };
 
   return (
@@ -591,12 +682,26 @@ const UserManagement = () => {
                         <td>
                           <button
                             className={user.isBanned ? "unban-btn" : "ban-btn"}
+                            style={{ fontSize: 12, padding: "2px 8px" }}
                             onClick={() =>
                               handleBanUser(user.uid, !user.isBanned)
                             }
                           >
                             {user.isBanned ? "Unban User" : "Ban User"}
                           </button>
+                          {!user.isBanned && (
+                            <button
+                              className="unban-btn"
+                              style={{
+                                marginLeft: 6,
+                                fontSize: 12,
+                                padding: "2px 8px",
+                              }}
+                              onClick={() => handleUnflagUser(user.uid)}
+                            >
+                              Unflag
+                            </button>
+                          )}
                         </td>
                       </tr>
                     ))}
@@ -604,6 +709,55 @@ const UserManagement = () => {
               </table>
             </div>
           )}
+          {/* Minimizable Flagged User History Section */}
+          <div className="flagged-history-section" style={{ marginTop: 24 }}>
+            <button
+              className="view-reports-btn"
+              style={{ marginBottom: 8 }}
+              onClick={() => setShowFlaggedHistory((prev) => !prev)}
+            >
+              {showFlaggedHistory ? "Hide" : "Show"} Flagged User History
+            </button>
+            {showFlaggedHistory && (
+              <div
+                className="flagged-history-list"
+                style={{
+                  background: "#f8f9fa",
+                  borderRadius: 8,
+                  padding: 16,
+                  boxShadow: "0 1px 4px rgba(0,0,0,0.04)",
+                }}
+              >
+                <h3 style={{ marginTop: 0 }}>Flagged User History</h3>
+                {flaggedHistory.length === 0 ? (
+                  <p style={{ color: "#888" }}>No flagged user history yet.</p>
+                ) : (
+                  <table style={{ width: "100%", fontSize: 14 }}>
+                    <thead>
+                      <tr>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Unflagged At</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {flaggedHistory.map((entry, idx) => (
+                        <tr key={entry.uid + idx}>
+                          <td>{entry.name}</td>
+                          <td>{entry.email}</td>
+                          <td>
+                            {dayjs(entry.unflaggedAt).format(
+                              "MMM D, YYYY HH:mm"
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Registered Users Section */}
@@ -639,6 +793,8 @@ const UserManagement = () => {
                           status={user.status}
                           addressValidated={user.addressValidated}
                           isPending={user.isPending || false}
+                          isBanned={user.isBanned}
+                          isFlagged={isUserFlagged(user, flaggedUsers)}
                         />
                       </td>
                       <td className="profile-column">

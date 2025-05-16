@@ -88,7 +88,10 @@ const Content = () => {
   const fetchTotalBikes = async () => {
     try {
       const bikesSnapshot = await getDocs(collection(db, "bikes"));
-      setTotalBikes(bikesSnapshot.size);
+      const availableBikes = bikesSnapshot.docs.filter(
+        (doc) => doc.data().bikeStatus === "Available"
+      );
+      setTotalBikes(availableBikes.length);
     } catch (error) {
       console.error("Error fetching total bikes:", error);
     }
@@ -347,11 +350,101 @@ const Content = () => {
   };
 
   useEffect(() => {
-    fetchTotalBikes();
-    fetchTotalRidesToday();
-    fetchTodaysMetrics();
-    fetchHourlyRevenue();
-    fetchRevenue();
+    // Real-time total bikes (available)
+    const unsubscribeBikes = onSnapshot(collection(db, "bikes"), (snapshot) => {
+      const availableBikes = snapshot.docs.filter(
+        (doc) => doc.data().bikeStatus === "Available"
+      );
+      setTotalBikes(availableBikes.length);
+    });
+
+    // Real-time total rides today & today's metrics & hourly revenue
+    const today = dayjs().startOf("day");
+    const rideHistoryRef = collection(db, "ride_history");
+    const unsubscribeRides = onSnapshot(rideHistoryRef, (snapshot) => {
+      let rideCount = 0;
+      let metrics = {
+        totalDistance: 0,
+        totalDuration: 0,
+        totalCalories: 0,
+        totalCarbon: 0,
+        totalRevenue: 0,
+      };
+      let hourlyData = Array(24).fill(0);
+      snapshot.forEach((doc) => {
+        const rideData = doc.data();
+        if (rideData.rideEndedAt) {
+          const endDate = getDayjsDate(rideData.rideEndedAt);
+          if (endDate.isSame(today, "day")) {
+            rideCount++;
+            metrics.totalDistance += Number(rideData.distance || 0);
+            metrics.totalDuration += Number(rideData.duration || 0);
+            metrics.totalCalories += Number(rideData.caloriesBurned || 0);
+            metrics.totalCarbon += Number(rideData.carbonSaved || 0);
+            metrics.totalRevenue += Number(rideData.amountPaid || 0);
+            const hour = endDate.hour();
+            hourlyData[hour] += Number(rideData.amountPaid || 0);
+          }
+        }
+      });
+      setTotalRidesToday(rideCount);
+      setTodaysMetrics(metrics);
+      setHourlyRevenue(hourlyData);
+    });
+
+    // Real-time revenue (today, weekly, monthly)
+    // Listen to all approved_users and their rideHistory
+    let unsubUserRevenue = null;
+    const unsubUsers = onSnapshot(
+      collection(db, "approved_users"),
+      (usersSnap) => {
+        const userIds = usersSnap.docs.map((doc) => doc.id);
+        let todayTotal = 0;
+        let weeklyTotal = 0;
+        let monthlyTotal = 0;
+        const weekStart = dayjs().startOf("week");
+        const monthStart = dayjs().startOf("month");
+        let pending = userIds.length;
+        if (pending === 0) setRevenueData({ today: 0, weekly: 0, monthly: 0 });
+        userIds.forEach((userId) => {
+          const rideHistoryRef = collection(
+            db,
+            "approved_users",
+            userId,
+            "rideHistory"
+          );
+          unsubUserRevenue = onSnapshot(rideHistoryRef, (ridesSnap) => {
+            ridesSnap.forEach((rideDoc) => {
+              const rideData = rideDoc.data();
+              const rideDate = getDayjsDate(rideData.rideStartedAt);
+              const amount = rideData.amountPaid || 0;
+              if (rideDate.isSame(today, "day")) todayTotal += amount;
+              if (rideDate.isAfter(weekStart)) weeklyTotal += amount;
+              if (rideDate.isAfter(monthStart)) monthlyTotal += amount;
+            });
+            pending--;
+            if (pending === 0) {
+              setRevenueData({
+                today: todayTotal,
+                weekly: weeklyTotal,
+                monthly: monthlyTotal,
+              });
+            }
+          });
+        });
+      }
+    );
+
+    // Clean up listeners on unmount
+    return () => {
+      unsubscribeBikes();
+      unsubscribeRides();
+      unsubUsers();
+      if (unsubUserRevenue) unsubUserRevenue();
+    };
+  }, []);
+
+  useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
       if (user) {
         try {
@@ -374,7 +467,7 @@ const Content = () => {
       }
     });
 
-    return () => unsubscribe();
+    return () => {};
   }, []);
 
   // Update the map initialization useEffect
@@ -537,64 +630,6 @@ const Content = () => {
     return () => {
       if (typeof unsubscribeAdmins === "function") {
         unsubscribeAdmins();
-      }
-    };
-  }, []);
-
-  // Remove duplicate useEffect for hourly revenue and combine into one
-  useEffect(() => {
-    const today = dayjs().startOf("day");
-    const rideHistoryRef = collection(db, "ride_history");
-    let unsubscribeListener = null;
-
-    try {
-      unsubscribeListener = onSnapshot(rideHistoryRef, (snapshot) => {
-        // Initialize metrics and hourly data
-        let metrics = {
-          totalDistance: 0,
-          totalDuration: 0,
-          totalCalories: 0,
-          totalCarbon: 0,
-          totalRevenue: 0,
-        };
-        let hourlyData = Array(24).fill(0);
-        let todayRides = 0;
-
-        snapshot.forEach((doc) => {
-          const rideData = doc.data();
-          if (rideData.rideEndedAt) {
-            const endDate = getDayjsDate(rideData.rideEndedAt);
-
-            if (endDate.isSame(today, "day")) {
-              // Update metrics
-              metrics.totalDistance += Number(rideData.distance || 0);
-              metrics.totalDuration += Number(rideData.duration || 0);
-              metrics.totalCalories += Number(rideData.caloriesBurned || 0);
-              metrics.totalCarbon += Number(rideData.carbonSaved || 0);
-              metrics.totalRevenue += Number(rideData.amountPaid || 0);
-
-              // Update hourly revenue
-              const hour = endDate.hour();
-              hourlyData[hour] += Number(rideData.amountPaid || 0);
-
-              // Increment today's rides count
-              todayRides++;
-            }
-          }
-        });
-
-        // Update all states at once
-        setTodaysMetrics(metrics);
-        setHourlyRevenue(hourlyData);
-        setTotalRidesToday(todayRides);
-      });
-    } catch (error) {
-      console.error("Error setting up ride history listener:", error);
-    }
-
-    return () => {
-      if (typeof unsubscribeListener === "function") {
-        unsubscribeListener();
       }
     };
   }, []);

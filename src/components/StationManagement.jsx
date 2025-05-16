@@ -16,6 +16,7 @@ import ContentHeader from "./ContentHeader";
 import AddStationMap from "./AddStationMap";
 import "../styles/StationManagement.css";
 import { FaEdit, FaTrashAlt, FaPlus, FaTimes } from "react-icons/fa";
+import { logAdminAction } from "../utils/logAdminAction";
 
 const StationManagement = () => {
   const [stations, setStations] = useState([]);
@@ -253,6 +254,13 @@ const StationManagement = () => {
       fetchUnassignedAdmins();
       fetchStations();
       fetchBikes();
+
+      await logAdminAction({
+        actionType: "DELETE_STATION",
+        details: `Deleted station: ${stationId}`,
+        targetCollection: "stations",
+        targetId: stationId,
+      });
     } catch (error) {
       console.error("Error deleting station:", error);
       alert("Error deleting station. Please try again.");
@@ -416,6 +424,13 @@ const StationManagement = () => {
         setTimeout(() => {
           setShowSuccess(false);
         }, 2000);
+
+        await logAdminAction({
+          actionType: "UPDATE_STATION",
+          details: `Updated station: ${stationRef.id}`,
+          targetCollection: "stations",
+          targetId: stationRef.id,
+        });
       }
     } catch (error) {
       console.error("Error saving station:", error);

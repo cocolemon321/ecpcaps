@@ -16,6 +16,7 @@ import ContentHeader from "./ContentHeader"; // Add this import
 import "../styles/RateManagement.css";
 import { FaEdit, FaHistory } from "react-icons/fa";
 import dayjs from "dayjs";
+import { logAdminAction } from "../utils/logAdminAction";
 
 // Simple mapping from doc IDs to friendly names
 const docIdToDisplayName = {
@@ -257,14 +258,11 @@ const RateManagement = () => {
       // Update rate
       const rateRef = doc(db, "rentalRates", editingRate.id);
       await updateDoc(rateRef, { pricePerMinute: price });
-
-      // Add to rate history with actual user name
-      await addDoc(collection(db, "rateHistory"), {
-        bikeType: editingRate.id,
-        oldPrice: editingRate.pricePerMinute,
-        newPrice: price,
-        timestamp: new Date(),
-        updatedBy: updatedByName, // Use the fetched name
+      await logAdminAction({
+        actionType: "UPDATE_RATE",
+        details: `Updated rate for ${editingRate.id} from ₱${editingRate.pricePerMinute} to ₱${price}`,
+        targetCollection: "rentalRates",
+        targetId: editingRate.id,
       });
 
       // Update local states
@@ -296,6 +294,12 @@ const RateManagement = () => {
         status: newStatus,
         processedAt: new Date(),
         processedBy: auth.currentUser.uid,
+      });
+      await logAdminAction({
+        actionType: `REMITTANCE_${newStatus.toUpperCase()}`,
+        details: `Remittance ${remitId} marked as ${newStatus}`,
+        targetCollection: "remittances",
+        targetId: remitId,
       });
 
       // Refresh remittances

@@ -1,14 +1,18 @@
 // src/components/Login.jsx
 import React, { useState } from "react";
 import { auth, signInWithEmailAndPassword } from "../firebase";
+import { signOut } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
 import "../styles/Login.css";
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "../firebase";
 
 const Login = () => {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [snackbar, setSnackbar] = useState({ open: false, message: "" });
 
   const getAssetPath = (filename) => {
     return import.meta.env.DEV
@@ -16,13 +20,30 @@ const Login = () => {
       : `/ecpcaps/assets/${filename}`;
   };
 
+  const showSnackbar = (message) => {
+    setSnackbar({ open: true, message });
+    setTimeout(() => setSnackbar({ open: false, message: "" }), 3000);
+  };
+
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      const userCredential = await signInWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+      const user = userCredential.user;
+      // Check if user is in super_admins collection
+      const superAdminDoc = await getDoc(doc(db, "super_admins", user.uid));
+      if (!superAdminDoc.exists()) {
+        showSnackbar("You are not authorized as a Super Admin.");
+        await signOut(auth);
+        return;
+      }
       navigate("/dashboard");
     } catch (err) {
-      setError(err.message);
+      showSnackbar(err.message);
     }
   };
 
@@ -67,6 +88,7 @@ const Login = () => {
           LOG IN
         </button>
       </form>
+      {snackbar.open && <div className="snackbar">{snackbar.message}</div>}
     </div>
   );
 };

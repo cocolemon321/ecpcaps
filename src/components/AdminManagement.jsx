@@ -9,6 +9,7 @@ import {
   arrayUnion,
   onSnapshot,
   addDoc,
+  getDoc,
 } from "firebase/firestore";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import {
@@ -29,6 +30,7 @@ import {
   FaUserTimes,
 } from "react-icons/fa";
 import dayjs from "dayjs";
+import { logAdminAction } from "../utils/logAdminAction";
 
 const AdminManagement = () => {
   const [admins, setAdmins] = useState([]);
@@ -149,6 +151,17 @@ const AdminManagement = () => {
       await updateDoc(adminRef, {
         roles: [newRole],
         updatedAt: new Date(),
+      });
+
+      // Fetch admin name for logging
+      const adminDoc = await getDoc(adminRef);
+      const adminName = adminDoc.exists() ? adminDoc.data().name : adminId;
+
+      await logAdminAction({
+        actionType: "UPDATE_ROLE",
+        details: `Updated role for admin: ${adminName} to ${newRole}`,
+        targetCollection: "admins",
+        targetId: adminId,
       });
 
       alert("Role updated successfully!");
@@ -293,7 +306,13 @@ const AdminManagement = () => {
         updatedAt: new Date(),
       };
 
-      await addDoc(collection(db, "admins"), adminData);
+      const docRef = await addDoc(collection(db, "admins"), adminData);
+      await logAdminAction({
+        actionType: "CREATE_ADMIN",
+        details: `Created admin: ${adminData.name}`,
+        targetCollection: "admins",
+        targetId: docRef.id,
+      });
 
       alert("Admin added successfully!");
       setName("");
@@ -323,6 +342,15 @@ const AdminManagement = () => {
         status: "Inactive",
         deactivatedAt: new Date(),
         updatedAt: new Date(),
+      });
+      // Fetch admin name for logging
+      const adminDoc = await getDoc(adminRef);
+      const adminName = adminDoc.exists() ? adminDoc.data().name : adminId;
+      await logAdminAction({
+        actionType: "DEACTIVATE_ADMIN",
+        details: `Deactivated admin: ${adminName}`,
+        targetCollection: "admins",
+        targetId: adminId,
       });
       alert("Admin account has been deactivated");
     } catch (error) {
@@ -359,6 +387,17 @@ const AdminManagement = () => {
       // Update Firestore document for this admin
       const adminRef = doc(db, "admins", editingAdmin.id);
       await updateDoc(adminRef, { profilePhoto: uploadedImageUrl });
+      // Fetch admin name for logging
+      const adminDoc = await getDoc(adminRef);
+      const adminName = adminDoc.exists()
+        ? adminDoc.data().name
+        : editingAdmin.id;
+      await logAdminAction({
+        actionType: "UPDATE_PROFILE_PHOTO",
+        details: `Updated profile photo for admin: ${adminName}`,
+        targetCollection: "admins",
+        targetId: editingAdmin.id,
+      });
       alert("Profile photo updated successfully!");
       // Close the edit modal
       setIsEditing(false);
