@@ -48,6 +48,9 @@ const BikeManagement = () => {
   const [bulkBikeName, setBulkBikeName] = useState(""); // New state for bulk bike name
   const [bulkBikes, setBulkBikes] = useState([]); // New state for preview bikes
   const [bulkPhotos, setBulkPhotos] = useState({}); // New state for storing photos
+  const [showRestockModal, setShowRestockModal] = useState(false);
+  const [restockQuantity, setRestockQuantity] = useState(1);
+  const [restockBike, setRestockBike] = useState(null);
 
   // Modify your useEffect to use a different ordering field temporarily
   useEffect(() => {
@@ -542,6 +545,57 @@ const BikeManagement = () => {
     setBulkPhotos({});
   };
 
+  // Add this function after the handleBulkAddSubmit function
+  const handleRestock = async (e) => {
+    e.preventDefault();
+    if (!restockBike || restockQuantity < 1) return;
+
+    try {
+      const regularBikeCount = bikes.filter(
+        (bike) => bike.bikeCategory === restockBike.bikeCategory
+      ).length;
+
+      const newBikes = [];
+      for (let i = 0; i < restockQuantity; i++) {
+        const prefix =
+          restockBike.bikeCategory === "Regular Bicycle" ? "BK" : "EBK";
+        const count = regularBikeCount + i + 1;
+        const bikeId = `${prefix}-${String(count).padStart(3, "0")}`;
+
+        newBikes.push({
+          bikeId,
+          bikeName: restockBike.bikeName,
+          bikeCategory: restockBike.bikeCategory,
+          bikeType: restockBike.bikeType,
+          bikeStatus: "Available",
+          isAvailable: true,
+          imageUrl: restockBike.imageUrl,
+          createdAt: new Date(),
+        });
+      }
+
+      // Add all bikes to Firestore
+      const addPromises = newBikes.map((bike) =>
+        addDoc(collection(db, "bikes"), bike)
+      );
+      await Promise.all(addPromises);
+
+      alert(`${restockQuantity} bikes added successfully!`);
+      setShowRestockModal(false);
+      setRestockQuantity(1);
+      setRestockBike(null);
+      await logAdminAction({
+        actionType: "RESTOCK_BIKE",
+        details: `Added ${restockQuantity} bikes of type ${restockBike.bikeName}`,
+        targetCollection: "bikes",
+        targetId: "bulk",
+      });
+    } catch (error) {
+      console.error("Error adding bikes:", error);
+      alert("Failed to add bikes");
+    }
+  };
+
   return (
     <Layout>
       <ContentHeader title="Bike Management" />
@@ -765,12 +819,24 @@ const BikeManagement = () => {
                       </div>
                     </td>
                     <td>
-                      <button
-                        className="edit-btn"
-                        onClick={(event) => handleEdit(bike, event)}
-                      >
-                        <FaEdit />
-                      </button>
+                      <div className="action-buttons">
+                        <button
+                          className="edit-btn"
+                          onClick={(event) => handleEdit(bike, event)}
+                        >
+                          <FaEdit />
+                        </button>
+                        <button
+                          className="restock-btn"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            setRestockBike(bike);
+                            setShowRestockModal(true);
+                          }}
+                        >
+                          Restock
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -1155,6 +1221,59 @@ const BikeManagement = () => {
                     onClick={() => {
                       setShowBulkAddModal(false);
                       resetBulkForm();
+                    }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* Add the Restock Modal before the closing div of bike-management-container */}
+        {showRestockModal && restockBike && (
+          <div className="modal-overlay">
+            <div className="modal-content">
+              <h2>Add More Bikes</h2>
+              <form onSubmit={handleRestock}>
+                <div className="restock-info">
+                  <p>
+                    <strong>Bike Name:</strong> {restockBike.bikeName}
+                  </p>
+                  <p>
+                    <strong>Category:</strong> {restockBike.bikeCategory}
+                  </p>
+                  <p>
+                    <strong>Type:</strong> {restockBike.bikeType}
+                  </p>
+                </div>
+
+                <div className="form-group">
+                  <label>Quantity to Add:</label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="100"
+                    value={restockQuantity}
+                    onChange={(e) =>
+                      setRestockQuantity(parseInt(e.target.value))
+                    }
+                    required
+                  />
+                </div>
+
+                <div className="modal-buttons">
+                  <button type="submit" className="save-btn">
+                    Add {restockQuantity} Bikes
+                  </button>
+                  <button
+                    type="button"
+                    className="cancel-btn"
+                    onClick={() => {
+                      setShowRestockModal(false);
+                      setRestockQuantity(1);
+                      setRestockBike(null);
                     }}
                   >
                     Cancel

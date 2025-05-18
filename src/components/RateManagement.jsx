@@ -17,6 +17,8 @@ import "../styles/RateManagement.css";
 import { FaEdit, FaHistory } from "react-icons/fa";
 import dayjs from "dayjs";
 import { logAdminAction } from "../utils/logAdminAction";
+import RemittanceReceiptPDF from "./RemittanceReceiptPDF";
+import { PDFDownloadLink } from "@react-pdf/renderer";
 
 // Simple mapping from doc IDs to friendly names
 const docIdToDisplayName = {
@@ -49,6 +51,8 @@ const RateManagement = () => {
   const [showRemittances, setShowRemittances] = useState(false);
   // Add these near your other state declarations
   const [processingRemittance, setProcessingRemittance] = useState(false);
+  const [superAdminName, setSuperAdminName] = useState("");
+  const [adminNames, setAdminNames] = useState({});
 
   // Add after other fetch functions
   const fetchRemittances = async () => {
@@ -84,6 +88,41 @@ const RateManagement = () => {
     fetchRateHistory();
     fetchStationRevenue();
     fetchRemittances();
+    const fetchSuperAdminName = async () => {
+      const user = auth.currentUser;
+      if (!user) return;
+      try {
+        const superAdminDocRef = doc(db, "super_admins", user.uid);
+        const superAdminDocSnap = await getDoc(superAdminDocRef);
+        if (superAdminDocSnap.exists()) {
+          setSuperAdminName(superAdminDocSnap.data().name);
+        } else {
+          // fallback to users collection
+          const userDocRef = doc(db, "users", user.uid);
+          const userDocSnap = await getDoc(userDocRef);
+          if (userDocSnap.exists()) {
+            setSuperAdminName(userDocSnap.data().name);
+          } else {
+            setSuperAdminName("Super Admin");
+          }
+        }
+      } catch (error) {
+        setSuperAdminName("Super Admin");
+      }
+    };
+    fetchSuperAdminName();
+    const fetchAdminNames = async () => {
+      const adminsSnapshot = await getDocs(collection(db, "admins"));
+      const names = {};
+      adminsSnapshot.docs.forEach((doc) => {
+        const data = doc.data();
+        if (data.uid && data.name) {
+          names[data.uid] = data.name; // Use the uid field, not doc.id
+        }
+      });
+      setAdminNames(names);
+    };
+    fetchAdminNames();
   }, []);
 
   useEffect(() => {
@@ -311,6 +350,24 @@ const RateManagement = () => {
     } finally {
       setProcessingRemittance(false);
     }
+  };
+
+  // Placeholder for super admin check (replace with real logic)
+  const isSuperAdmin = () => true; // TODO: Replace with actual check
+
+  // Helper to fetch admin name by UID if not already in map
+  const fetchAdminNameByUid = async (uid) => {
+    if (!uid) return "Unknown Admin";
+    if (adminNames[uid]) return adminNames[uid];
+    try {
+      const adminDoc = await getDoc(doc(db, "admins", uid));
+      if (adminDoc.exists()) {
+        const name = adminDoc.data().name;
+        setAdminNames((prev) => ({ ...prev, [uid]: name }));
+        return name;
+      }
+    } catch (e) {}
+    return "Unknown Admin";
   };
 
   return (
@@ -648,6 +705,49 @@ const RateManagement = () => {
                               Reject
                             </button>
                           </div>
+                        )}
+                        {remit.status === "confirmed" && isSuperAdmin() && (
+                          <PDFDownloadLink
+                            document={
+                              <RemittanceReceiptPDF
+                                stationName={remit.stationName}
+                                amount={remit.amount}
+                                collectedFrom={dayjs(
+                                  remit.collectedFrom?.toDate()
+                                ).format("MMM D, YYYY")}
+                                collectedTo={dayjs(
+                                  remit.collectedTo?.toDate()
+                                ).format("MMM D, YYYY")}
+                                dateSubmitted={dayjs(
+                                  remit.dateSubmitted?.toDate()
+                                ).format("MMM D, YYYY HH:mm")}
+                                issuerName={superAdminName}
+                                submittedBy={
+                                  adminNames[remit.submittedBy] ||
+                                  "Unknown Admin"
+                                }
+                              />
+                            }
+                            fileName={`RemittanceReceipt_${remit.stationName}_${remit.id}.pdf`}
+                            style={{ textDecoration: "none" }}
+                            onClick={async () => {
+                              if (
+                                remit.submittedBy &&
+                                !adminNames[remit.submittedBy]
+                              ) {
+                                await fetchAdminNameByUid(remit.submittedBy);
+                              }
+                            }}
+                          >
+                            {({ loading }) => (
+                              <button
+                                className="print-receipt-btn"
+                                disabled={loading}
+                              >
+                                {loading ? "Generating..." : "Print Receipt"}
+                              </button>
+                            )}
+                          </PDFDownloadLink>
                         )}
                       </td>
                     </tr>

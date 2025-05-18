@@ -15,6 +15,7 @@
   "dependencies": {
     "@mapbox/mapbox-gl-draw": "^1.5.0",
     "@react-google-maps/api": "^2.20.6",
+    "@react-pdf/renderer": "^4.3.0",
     "axios": "^1.8.4",
     "bootstrap": "^5.3.6",
     "cheerio": "^1.0.0",
@@ -23,6 +24,7 @@
     "express": "^4.21.2",
     "firebase": "^9.23.0",
     "firebase-admin": "^13.2.0",
+    "googleapis": "^148.0.0",
     "jspdf": "^3.0.1",
     "mapbox-gl": "^3.11.0",
     "pdfmake": "^0.2.20",
