@@ -281,20 +281,29 @@ const RateManagement = () => {
     }
 
     try {
-      // Get current user
       const currentUser = auth.currentUser;
-      if (!currentUser) {
-        throw new Error("No user is signed in");
+      if (!currentUser) throw new Error("No user is signed in");
+
+      // Check if superAdminName exists, if not fetch it
+      let updatedByName = superAdminName;
+      if (!updatedByName || updatedByName === "Unknown Admin") {
+        const superAdminDocRef = doc(db, "super_admins", currentUser.uid);
+        const superAdminDocSnap = await getDoc(superAdminDocRef);
+        if (superAdminDocSnap.exists()) {
+          updatedByName = superAdminDocSnap.data().name;
+        }
       }
 
-      // Fetch user's name from Firestore
-      const userDocRef = doc(db, "users", currentUser.uid);
-      const userDocSnap = await getDoc(userDocRef);
-      const updatedByName = userDocSnap.exists()
-        ? userDocSnap.data().name
-        : "Unknown User";
+      // 1. Create rate history entry
+      await addDoc(collection(db, "rateHistory"), {
+        bikeType: editingRate.id,
+        oldPrice: editingRate.pricePerMinute,
+        newPrice: price,
+        updatedBy: updatedByName,
+        timestamp: new Date(),
+      });
 
-      // Update rate
+      // 2. Update the rate
       const rateRef = doc(db, "rentalRates", editingRate.id);
       await updateDoc(rateRef, { pricePerMinute: price });
       await logAdminAction({
@@ -304,34 +313,40 @@ const RateManagement = () => {
         targetId: editingRate.id,
       });
 
-      // Create notification for all users
-      const usersSnapshot = await getDocs(collection(db, "users"));
-      const notificationPromises = usersSnapshot.docs.map(async (userDoc) => {
-        const notification = {
-          userId: userDoc.id,
-          type: "rate_change",
-          title: "Rental Rate Update",
-          message: `The rental rate for ${
-            docIdToDisplayName[editingRate.id] || editingRate.id
-          } has been updated from ₱${
-            editingRate.pricePerMinute
-          } to ₱${price} per minute.`,
-          createdAt: new Date(),
-          isRead: false,
-        };
-        await addDoc(collection(db, "user_notifications"), notification);
-      });
+      // 3. Send notifications to all approved users
+      const approvedUsersSnapshot = await getDocs(
+        collection(db, "approved_users")
+      );
+      const notificationPromises = approvedUsersSnapshot.docs.map(
+        async (userDoc) => {
+          const notification = {
+            userId: userDoc.id,
+            type: "rate_change",
+            title: "Rental Rate Update",
+            message: `The rental rate for ${
+              docIdToDisplayName[editingRate.id]
+            } has been updated from ₱${
+              editingRate.pricePerMinute
+            } to ₱${price} per minute.`,
+            createdAt: new Date(),
+            isRead: false,
+          };
+          return addDoc(collection(db, "user_notifications"), notification);
+        }
+      );
 
       await Promise.all(notificationPromises);
 
-      // Update local states
+      // 4. Update local state and UI
       const updatedRates = rates.map((rate) =>
         rate.id === editingRate.id ? { ...rate, pricePerMinute: price } : rate
       );
       setRates(updatedRates);
-      await fetchRateHistory(); // Refresh history
-
+      await fetchRateHistory();
       closeEditModal();
+
+      // Show success message
+      alert("Rate updated successfully and users have been notified!");
     } catch (error) {
       console.error("Error updating rate:", error);
       alert("Failed to update the rate. See console for details.");
