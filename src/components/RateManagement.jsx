@@ -304,6 +304,26 @@ const RateManagement = () => {
         targetId: editingRate.id,
       });
 
+      // Create notification for all users
+      const usersSnapshot = await getDocs(collection(db, "users"));
+      const notificationPromises = usersSnapshot.docs.map(async (userDoc) => {
+        const notification = {
+          userId: userDoc.id,
+          type: "rate_change",
+          title: "Rental Rate Update",
+          message: `The rental rate for ${
+            docIdToDisplayName[editingRate.id] || editingRate.id
+          } has been updated from ₱${
+            editingRate.pricePerMinute
+          } to ₱${price} per minute.`,
+          createdAt: new Date(),
+          isRead: false,
+        };
+        await addDoc(collection(db, "user_notifications"), notification);
+      });
+
+      await Promise.all(notificationPromises);
+
       // Update local states
       const updatedRates = rates.map((rate) =>
         rate.id === editingRate.id ? { ...rate, pricePerMinute: price } : rate
